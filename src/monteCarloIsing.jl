@@ -1,6 +1,6 @@
 
-using Plots, Elliptic
-gr()
+using Plots, Elliptic, Rsvg
+plotlyjs()
 init=Dates.time()
 #funcion modulo auxiliar. Igual que el módulo normal, pero tal que mod(n,n)=n
 println("Iniciando")
@@ -85,49 +85,35 @@ usando el algoritmo Metrópolis. Suponemos los valores de spin son 1 y -1.
 function metro(N=100, Nx=10, Ny=10,f=10;test=false)
     X=[]
     #calculamos la energía como parte de la simulación
-    E=[]
     Y=rand([-1,1],Nx,Ny)
     push!(X,Y)
-    push!(E,energia(Y))
     for i in 2:N
         res=0
-        global P
-        k=0
-        while res<=1
-            P=[rand(1:Nx),rand(1:Ny)]
-            res=r(Y,P)
-            t=rand()
-            if test
-                print("iter = ")
-                println(i-1)
-                println("lattice")
-                println(Y)
-                print("P = ")
-                println(P)
-                print("r = ")
-                println(res)
-                print("tes = ")
-                println(t)
-                println()
-                println()
-            end
-            k=k+1
-            if k>=1000
-                #println("loop infinito")
-                break
-            end
-            if res>t
-                break
-            end
+        P=[rand(1:Nx),rand(1:Ny)]
+        res=r(Y,P)
+        t=rand()
+        if test
+            print("iter = ")
+            println(i-1)
+            println("lattice")
+            println(Y)
+            print("P = ")
+            println(P)
+            print("r = ")
+            println(res)
+            print("tes = ")
+            println(t)
+            println()
+            println()
         end
-        #Cambiamos el spin escogido
-        Y[P[1],P[2]]=-1*Y[P[1],P[2]]
+        if res>t
+            Y[P[1],P[2]]=-1*Y[P[1],P[2]]
+        end
         if mod(i,f)==1
             push!(X,copy(Y))
-            push!(E,energia(Y))
         end
     end
-    return (X,E)
+    return X
 end
 
 #=
@@ -143,18 +129,19 @@ B=0
 X=metro(22,5,5,test=true)
 =#
 
-n=16
+n=parse(Int64,ARGS[1])
 J=1
 B=0
 β=0
-pasos=10001
-freq=100
+pasos=10000001
+freq=100000
 T=linspace(0.1,5,50)
 M=[]
 E=[]
 EE=[]
 println()
 println("Simulando")
+
 for t in T
     β=1/t
     temp1=[]
@@ -162,10 +149,11 @@ for t in T
     temp3=[]
     for i in 1:5
         X=metro(pasos,n,n,freq)
-        inicio=convert(Int64,floor(length(X[2])*3/4))
-        mag=[abs(sum(X[1][i])/n^2) for i in inicio:length(X[2])]
+        inicio=convert(Int64,floor(length(X)*3/4))
+        mag=[abs(sum(X[i])/n^2) for i in inicio:length(X)]
         push!(temp1,mean(mag))
-        temp4=[X[2][i] for i in inicio:length(X[2])]
+        en=[energia(x) for x in X]
+        temp4=[en[i] for i in inicio:length(X)]
         push!(temp2,mean(temp4))
         push!(temp3,mean([x^2 for x in temp4]))
         print(t)
@@ -190,19 +178,19 @@ println("Escribiendo resultados")
 if ~(isdir("../outputs"))
     mkdir("../outputs")
 end
-dest=Dates.format(Dates.now(),"HH;MM;SS dd-mm-Y")
+dest=Dates.format(Dates.now(),"HH:MM:SS dd-mm-Y")
 mkdir("../outputs/$(dest)")
 
 
 T=linspace(0.1,5,50)
-p1=scatter(T,M,ylim=(-0.2,1.1),
+p1=scatter(T,M,
     title="Magnetizacion",
     xlabel="Temperatura (KB=1)",
     ylabel="Magnetizacion absoluta promedio por spin",
     label="simulación con N=10000"
 )
-plot!(T,[magOnsager(t) for t in T],label="Solución teórica")
-plot!([2.3,2.3],[0,1],linestyle=:dash,label="Temperatura crítica")
+#plot!(T,[magOnsager(t) for t in T],label="Solución teórica")
+#plot!([2.3,2.3],[0,1],linestyle=:dash,label="Temperatura crítica")
 savefig("../outputs/$(dest)/mag.png")
 #display(p)
 
@@ -214,35 +202,34 @@ p=scatter(T,E/n^2,
     label="simulación con N=10000"
 )
 
-plot!(T,[energiaOnsager(t) for t in T],label="Solución teórica")
-plot!([2.3,2.3],[-2,0],linestyle=:dash,label="Temperatura crítica")
+#plot!(T,[energiaOnsager(t) for t in T],label="Solución teórica")
+#plot!([2.3,2.3],[-2,0],linestyle=:dash,label="Temperatura crítica")
 savefig("../outputs/$(dest)/ener.png")
 #display(p)
 
 
 
-p=scatter(T,CV/n^2,
-    ylim=(-0.1,2),
+p=scatter([T[i] for i in 10:length(T)],[CV[i]/n^2 for i in 10:length(CV)],
     title="Capacidad calorífica",
     xlabel="Temperatura (KB=1)",
     ylabel="Capacidad calorífica por spin",
     label="simulación con N=10000"
 )
-plot!(T,[cvOnsager(t) for t in T],label="Solución teórica")
-plot!([2.3,2.3],[0,2],linestyle=:dash,label="Temperatura crítica")
+#plot!(T,[cvOnsager(t) for t in T],label="Solución teórica")
+#plot!([2.3,2.3],[0,2],linestyle=:dash,label="Temperatura crítica")
 savefig("../outputs/$(dest)/cv.png")
 
 
 write("../outputs/$(dest)/datos.csv")
 open("../outputs/$(dest)/datos.csv","w") do f 
-        write(f,"Modelo de ising, Fecha:$(dest) \n")
-        write(f,"Tiempo de ejecución, $(round(Dates.time()-init,2)) \n")
+        write(f,"Modelo de ising,Fecha, $(dest) \n")
+        write(f," ,Tiempo de ejecución, $(round(Dates.time()-init,2)) \n")
         write(f," Parámetros \n")
         write(f," n, J, B, pasos, frecuencia \n ")
         write(f," $n, $J, $B, $(pasos), $(freq) \n ")
         write(f,"\n")
         write(f,"T,M,E,CV \n")
-        for i in length(T)
+        for i in 1:length(T)
             write(f,"$(T[i]), $(M[i]),$(E[i]), $(CV[i]) \n")
         end
     end
