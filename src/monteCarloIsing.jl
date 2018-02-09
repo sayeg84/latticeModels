@@ -129,16 +129,18 @@ B=0
 X=metro(22,5,5,test=true)
 =#
 
-n=parse(Int64,ARGS[1])
-J=1
-B=0
-β=0
-pasos=10000001
-freq=100000
-T=linspace(0.1,5,50)
-M=[]
-E=[]
-EE=[]
+n = parse(Int64,ARGS[1])
+J = 1
+B = 0
+β = 0
+aux = parse(Int64,ARGS[2])
+pasos = 10^aux + 1
+aux = parse(Int64,ARGS[3])
+freq = 10^aux
+T = linspace(0.1,5,50)
+M = []
+E = []
+EE = []
 println()
 println("Simulando")
 
