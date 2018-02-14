@@ -39,7 +39,7 @@ for j in 0:(length(t)-1)
     end
     init=copy(X[end])
     mag[end-j]=mean(temp1)
-    ener[end-j]=mean(temp2)
+    ener[end-j]=mean(temp2)/(param[1]^2)
     cv[end-j]=mean(temp3)
 end
 cv=[(cv[i]-ener[i]^2)/(t[i]^2) for i in 1:length(t)]
