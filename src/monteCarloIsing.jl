@@ -107,6 +107,7 @@ function metro(N=100, Nx=10, Ny=10,f=10;test=false)
             println()
         end
         if res>t
+  
             Y[P[1],P[2]]=-1*Y[P[1],P[2]]
         end
         if mod(i,f)==1
