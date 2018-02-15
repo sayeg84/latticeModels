@@ -5,7 +5,7 @@ module Algorithms
     Implementación del algoritmo metrópolis para crear N matrices de Nx*Ny 
     usando el algoritmo Metrópolis. Suponemos los valores de spin son 1 y -1.
     =#
-    function ChangeSpin(latt,pos)
+    function ChangeSpin!(latt,pos)
         dim=length(size(latt))
         if dim==1
             latt[pos[1]]=-1*latt[pos[1]]
@@ -42,12 +42,34 @@ module Algorithms
                 println()
             end
             if res>t
-                ChangeSpin(mat,pos)
+                ChangeSpin!(mat,pos)
             end
             if mod(i,param[5])==1
                 push!(matArr,copy(mat))
             end
         end
         return matArr
+    end
+
+    # =============================================
+    # Wang-Landau beggining
+    function isFlat(hist)
+        min=minimum(hist)
+        max=maximum(hist)
+        avg=mean(hist)
+        if (max-avg)/avg > 0.2 || (avg-min)/avg > 0.2
+            return false
+        else
+            return true
+        end
+    end
+    function WangLandau(param,func,intervals::Int64;test=false)
+        hist=zeros(intervals)
+        dos=zeros(intervals)
+        energyIntervals=linspace(-2,0,intervals+1)
+        modfact=exp(1)
+        for i in 1:param[4]+1
+            pos=rand(1:param[1],1:param[1])
+        end
     end
 end
