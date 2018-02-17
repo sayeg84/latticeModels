@@ -105,5 +105,8 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         end
     end
 
-
 end
+#=
+x=[1 -1 -1 1 -1; -1 1 -1 -1 1; 1 1 1 1 -1; -1 1 -1 -1 1; -1 1 1 -1 1]
+println(StatEnsemble.Energy(x,[10,1,0,100,10],StatEnsemble.SquareLatticeNeighbors))
+=#
