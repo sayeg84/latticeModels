@@ -109,7 +109,7 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x=x+exp(s[i]-ener*param[1]/temp)
+            x=x+exp(big(s[i])-ener*param[1]^2/temp)
         end
         return x
     end
@@ -118,7 +118,7 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x=x+ener*exp(s[i]-ener*param[1]/temp)
+            x=x+ener*exp(big(s[i])-ener*param[1]^2/temp)
         end
         return x/(Partition(s,energyIntervals,temp,param)*param[1])
     end
@@ -127,7 +127,7 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x = x + ener^2 *exp(s[i]-ener*param[1]/temp)
+            x = x + ener^2 *exp(big(s[i])-ener*param[1]^2/temp)
         end
         x=x/Partition(s,energyIntervals,temp,param)
         return (x-DOSEnergy(s,energyIntervals,temp,param)^2)/temp^2
