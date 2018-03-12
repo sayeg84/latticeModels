@@ -9,12 +9,12 @@ println("Simulating")
 t=linspace(0.1,5,50)
 param=[]
 #asignamos los parámetros
-push!(param,5)
+push!(param,10)
 push!(param,1)
 push!(param,0)
 push!(param,10^6)
 push!(param,10^4)
-#=
+
 mag=zeros(length(t))
 ener=zeros(length(t))
 cv=zeros(length(t))
@@ -54,9 +54,3 @@ InOut.MakeDirectories()
 InOut.MakePlots(t,mag,ener,cv,param)
 time=Dates.time()-time
 InOut.MakeTable(t,mag,ener,cv,param,time)
-=#
-initLatt=rand([-1,1],param[1],param[1])
-X=Algorithms.WangLandau(param,initLatt,20;test=true)
-println(X[1])
-println(X[2])
-println(X[3])

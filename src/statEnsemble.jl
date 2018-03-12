@@ -105,6 +105,42 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         end
     end
 
+    function Partition(s,energyIntervals,temp,param)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])/2
+            x=x+exp(s[i]-ener*param[1]/temp)
+        end
+        return x
+    end
+
+    function DOSEnergy(s,energyIntervals,temp,param)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])/2
+            x=x+ener*exp(s[i]-ener*param[1]/temp)
+        end
+        return x/(Partition(s,energyIntervals,temp,param)*param[1])
+    end
+        
+    function DOSCV(s,energyIntervals,temp,param)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])/2
+            x = x + ener^2 *exp(s[i]-ener*param[1]/temp)
+        end
+        x=x/Partition(s,energyIntervals,temp,param)
+        return (x-DOSEnergy(s,energyIntervals,temp,param)^2)/temp^2
+    end
+    function WangLandauValues(s,energyIntervals,tempArray,param)
+        x=[]
+        y=[]
+        for temp in tempArray
+            push!(x,DOSEnergy(s,energyIntervals,temp,param))
+            push!(y,DOSCV(s,energyIntervals,temp,param))
+        end
+        return (x,y)
+    end
 end
 #=
 x=[1 -1 -1 1 -1; -1 1 -1 -1 1; 1 1 1 1 -1; -1 1 -1 -1 1; -1 1 1 -1 1]
