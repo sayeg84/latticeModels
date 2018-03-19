@@ -30,7 +30,7 @@ for j in 0:(length(t)-1)
         initial=convert(Int64,floor(length(X)*3/4))
         M=[abs(sum(X[k])) for k in initial:length(X)]
         push!(temp1,mean(M))
-        en=[StatEnsemble.Energy(x,param,StatEnsemble.SquareLatticeNeighbors) for x in X]
+        en=[StatEnsemble.Energy(x,param,Auxiliar.SquareLatticeNeighbors) for x in X]
         temp4=[en[k] for k in initial:length(X)]
         push!(temp2,mean(temp4))
         push!(temp3,mean([x^2 for x in temp4]))

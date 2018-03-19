@@ -1,59 +1,11 @@
 include("statEnsemble.jl")
+include("auxiliar.jl")
 module Algorithms
-    using StatEnsemble
+    using StatEnsemble, Auxiliar
     #=
     Implementación del algoritmo metrópolis para crear N matrices de Nx*Ny 
     usando el algoritmo Metrópolis. Suponemos los valores de spin son 1 y -1.
     =#
-    function SetValue!(mat,pos,val)
-        dim=length(size(mat))
-        if dim!=length(pos)
-            error("Dimensions must match")
-        elseif eltype(mat)!=typeof(val) && eltype(mat)==Any
-            error("Types must match")
-        elseif dim==1
-            mat[pos[1]]=val
-        elseif dim==2
-            mat[pos[1],pos[2]]=val
-        elseif dim==3
-            mat[pos[1],pos[2],pos[3]]=val
-        else
-            error("Dimension not supported")
-        end
-
-    end
-    function GetValue(mat,pos)
-        dim=length(size(mat))
-        if dim!=length(pos)
-            error("Dimensions must match")
-        elseif dim==1
-            return mat[pos[1]]
-        elseif dim==2
-            return mat[pos[1],pos[2]]
-        elseif dim==3
-            return mat[pos[1],pos[2],pos[3]]
-        else
-            error("Dimension not supported")
-        end
-    end
-    function ChangeSpin!(latt,pos)
-        dim=length(size(latt))
-        if dim==1
-            latt[pos[1]]=-1*latt[pos[1]]
-        elseif dim==2
-            latt[pos[1],pos[2]]=-1*latt[pos[1],pos[2]]
-        elseif dim==3
-            latt[pos[1],pos[2],pos[3]]=-1*latt[pos[1],pos[2],pos[3]]
-        end
-    end
-    function SearchSortedMod(x,a)
-        b=searchsortedlast(x,a)
-        if b==length(x)
-            return length(x)-1
-        else
-            return b
-        end
-    end
     function Metropolis(temp::Float64,param,initLatt;test=false)
         matArr=[]
         mat=initLatt
@@ -63,7 +15,7 @@ module Algorithms
             res=StatEnsemble.ProbCanonical(mat,
                                         pos,
                                         param,
-                                        StatEnsemble.SquareLatticeNeighbors,
+                                        Auxiliar.SquareLatticeNeighbors,
                                         temp)
             t=rand()
             if test
@@ -81,7 +33,7 @@ module Algorithms
                 println()
             end
             if res>t
-                ChangeSpin!(mat,pos)
+                Auxiliar.ChangeSpin!(mat,pos)
             end
             if mod(i,param[5])==1
                 push!(matArr,copy(mat))
@@ -112,12 +64,12 @@ module Algorithms
         n=0
         while (modfact>=1e-5)
             pos=rand(1:param[1],length(size(latt)))
-            energyBefore=StatEnsemble.Energy(latt,param,StatEnsemble.SquareLatticeNeighbors)
-            energyAfter=energyBefore+2*GetValue(latt,pos)*(param[2]*StatEnsemble.SquareLatticeNeighbors(latt,pos)+param[3])
+            energyBefore=StatEnsemble.Energy(latt,param,Auxiliar.SquareLatticeNeighbors)
+            energyAfter=energyBefore+2*Auxiliar.GetValue(latt,pos)*(param[2]*Auxiliar.SquareLatticeNeighbors(latt,pos)+param[3])
             energyBefore=energyBefore/(param[1])^2
             energyAfter=energyAfter/(param[1])^2
-            p1=SearchSortedMod(energyIntervals,energyBefore)
-            p2=SearchSortedMod(energyIntervals,energyAfter)
+            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
+            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
             tes=rand()
             last=[]
             if test
@@ -151,7 +103,7 @@ module Algorithms
             b=exp(s[p2])
             η=exp(big(s[p1]-s[p2]))
             if tes < η
-                ChangeSpin!(latt,pos) 
+                Auxiliar.ChangeSpin!(latt,pos) 
             end
             s[p1]=s[p1]+modfact
             hist[p1]=hist[p1]+1
