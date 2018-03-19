@@ -10,25 +10,27 @@ println()
 println("Simulating")
 param=[]
 #asignamos los parámetros
-push!(param,10)
+push!(param,6)
 push!(param,1)
 push!(param,0)
 push!(param,10^6)
 push!(param,10^4)
 
 initLatt=rand([-1,1],param[1],param[1])
-X=Algorithms.WangLandau(param,initLatt,10,test=true)
+X=Algorithms.WangLandau(param,initLatt,10,test=false)
 energyIntervals=X[1]
 s=X[2]
 tempArray=linspace(0.1,5,50)
 ener=[]
 cv=[]
+mag=[]
 for temp in tempArray
-    push!(ener,StatEnsemble.DOSEnergy(s,energyIntervals,temp,param))
-    push!(cv,StatEnsemble.DOSCV(s,energyIntervals,temp,param))
+    push!(ener,StatEnsemble.DOSEnergy(s,energyIntervals,temp,param)/(param[1]^2))
+    push!(cv,StatEnsemble.DOSCV(s,energyIntervals,temp,param)/(param[1]^2))
+    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,temp,param)/(param[1]^2))
+
 end
 
-mag=zeros(50)
 println()
 println("Writing Output")
 InOut.MakeDirectories()

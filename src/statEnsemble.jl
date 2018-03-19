@@ -1,7 +1,5 @@
 module StatEnsemble
 export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
-
-
     #funcion modulo auxiliar. Igual que el módulo normal, pero tal que mod(n,n)=n
     function Modl(a::Int64,b::Int64)
         x=mod(a,b)
@@ -11,7 +9,55 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
             return x
         end
     end
+    function SetValue!(mat,pos,val)
+        dim=length(size(mat))
+        if dim!=length(pos)
+            error("Dimensions must match")
+        elseif eltype(mat)!=typeof(val) && eltype(mat)==Any
+            error("Types must match")
+        elseif dim==1
+            mat[pos[1]]=val
+        elseif dim==2
+            mat[pos[1],pos[2]]=val
+        elseif dim==3
+            mat[pos[1],pos[2],pos[3]]=val
+        else
+            error("Dimension not supported")
+        end
 
+    end
+    function GetValue(mat,pos)
+        dim=length(size(mat))
+        if dim!=length(pos)
+            error("Dimensions must match")
+        elseif dim==1
+            return mat[pos[1]]
+        elseif dim==2
+            return mat[pos[1],pos[2]]
+        elseif dim==3
+            return mat[pos[1],pos[2],pos[3]]
+        else
+            error("Dimension not supported")
+        end
+    end
+    function ChangeSpin!(latt,pos)
+        dim=length(size(latt))
+        if dim==1
+            latt[pos[1]]=-1*latt[pos[1]]
+        elseif dim==2
+            latt[pos[1],pos[2]]=-1*latt[pos[1],pos[2]]
+        elseif dim==3
+            latt[pos[1],pos[2],pos[3]]=-1*latt[pos[1],pos[2],pos[3]]
+        end
+    end
+    function SearchSortedMod(x,a)
+        b=searchsortedlast(x,a)
+        if b==length(x)
+            return length(x)-1
+        else
+            return b
+        end
+    end
 
     #función de vecinos inmediatos utilizada para la función de peso del algoritmo metrópolis
     function SquareLatticeNeighbors(latt,pos;test=false)
@@ -82,13 +128,6 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         return e
     end
 
-    #=
-    Probabilidad de cambio para el algoritmo Metrópolis.
-
-    Definida como el cociente de la densidad de probabilidad de estados
-    del espacio muestra entre dos estados deseados. Para mayor información,
-    consultar la referencia bibliográfica
-    =#
 
     function ProbCanonical(latt,pos,param,func,temp)
         aux=param[2]*func(latt,pos)+param[3]
@@ -105,33 +144,71 @@ export Modl, SquareLatticeNeighbors, Energy, ProbCanonical
         end
     end
 
+    function MagArray(energyIntervals,param;test=false)
+        m=ones(param[1],param[1])
+        aux=[]
+        for i in 1:(length(energyIntervals)-1)
+            push!(aux,[])
+        end
+
+        for i in 1:param[1]
+            k=Modl(i,2)
+            for j in k:2:param[1]
+                mag=abs(sum(m))
+                e=Energy(m,param,SquareLatticeNeighbors)/(param[1]^2)
+                pos=SearchSortedMod(energyIntervals,e)
+                push!(aux[pos],mag)
+                if test
+                    println(m)
+                    println(mag)
+                    println(e)
+                    println(pos)
+                end
+                ChangeSpin!(m,[i,j])
+            end
+        end
+        fin=[mean(aux[i]) for i in 1:length(aux)]
+        return fin
+    end
+
     function Partition(s,energyIntervals,temp,param)
         x=0
         for i in 1:length(s)
-            ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x=x+exp(big(s[i])-ener*param[1]^2/temp)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
+            x=x+exp(big(s[i])-ener/temp)
         end
         return x
+    end
+
+    function DOSMag(s,energyIntervals,temp,param)
+        m=MagArray(energyIntervals,param)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
+            x=x+m[i]*exp(big(s[i])-ener/temp)
+        end
+        return x/(Partition(s,energyIntervals,temp,param))
     end
 
     function DOSEnergy(s,energyIntervals,temp,param)
         x=0
         for i in 1:length(s)
-            ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x=x+ener*exp(big(s[i])-ener*param[1]^2/temp)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
+            x=x+ener*exp(big(s[i])-ener/temp)
         end
-        return x/(Partition(s,energyIntervals,temp,param)*param[1])
+        return x/(Partition(s,energyIntervals,temp,param))
     end
         
     function DOSCV(s,energyIntervals,temp,param)
         x=0
         for i in 1:length(s)
-            ener=(energyIntervals[i]+energyIntervals[i+1])/2
-            x = x + ener^2 *exp(big(s[i])-ener*param[1]^2/temp)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
+            x = x + ener^2 *exp(big(s[i])-ener/temp)
         end
         x=x/Partition(s,energyIntervals,temp,param)
         return (x-DOSEnergy(s,energyIntervals,temp,param)^2)/temp^2
     end
+
     function WangLandauValues(s,energyIntervals,tempArray,param)
         x=[]
         y=[]
