@@ -54,11 +54,11 @@ module Algorithms
             return false
         end
     end
-    function WangLandau(param,initLatt,intervals::Int64;test=false)
+    function WangLandau(param,initLatt;test=false)
         last=[]
-        hist=zeros(intervals)
-        s=zeros(intervals)
-        energyIntervals=collect(linspace(-2,2,intervals+1))
+        hist=zeros(param[6])
+        s=zeros(param[6])
+        energyIntervals=collect(linspace(-2,2,param[6]+1))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -101,7 +101,7 @@ module Algorithms
             end
             a=exp(s[p1])
             b=exp(s[p2])
-            η=exp(big(s[p1]-s[p2]))
+            η=exp(big(s[p2]-s[p1]))
             if tes < η
                 Auxiliar.ChangeSpin!(latt,pos) 
             end
@@ -110,14 +110,17 @@ module Algorithms
             if isFlat(hist)
                 modfact=modfact*1/2
                 last=copy(hist)
-                hist=zeros(intervals)
+                hist=zeros(param[6])
                 println(n)
                 println("change")
                 println(modfact)
             end
+            if mod(n,10^5) == 0
+                println(n/10^6)
+            end
             if n==10^8
-                println("exceded tolerance")
-                break
+                println("Exceded tolerance")
+                return (energyIntervals,s,last)
             end
             n=n+1
         end

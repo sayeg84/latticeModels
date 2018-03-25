@@ -9,6 +9,14 @@ module Auxiliar
         end
     end
 
+    function MeanMod(x)
+        if length(x)>0
+            return mean(x)
+        else
+            return 0
+        end
+    end
+
     function SetValue!(mat,pos,val)
         dim=length(size(mat))
         if dim!=length(pos)

@@ -77,7 +77,7 @@ export Energy, ProbCanonical
                 Auxiliar.ChangeSpin!(m,[i,j])
             end
         end
-        fin=[mean(aux[i]) for i in 1:length(aux)]
+        fin=[Auxiliar.MeanMod(aux[i]) for i in 1:length(aux)]
         return fin
     end
 
