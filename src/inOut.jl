@@ -64,17 +64,34 @@ export MakeDirectories, MakePlots, MakeTable
         cd(dest)
         write("datos.csv")
         open("datos.csv","w") do f 
-                write(f,"Modelo de ising,Fecha, $(dest) \n")
-                write(f," ,Tiempo de ejecución, $(round(time,2)) \n")
-                write(f," Parámetros \n")
-                write(f," n, J, B, pasos, frecuencia \n ")
-                write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]) \n ")
-                #write(f," $n, $J, $B, $(pasos), $(freq) \n ")
-                write(f,"\n")
-                write(f,"T,M,E,CV \n")
-                for i in 1:length(t)
-                    write(f,"$(t[i]), $(a1[i]),$(a2[i]), $(a3[i]) \n")
-                end
+            write(f,"Modelo de ising,Fecha, $(dest) \n")
+            write(f," ,Tiempo de ejecución, $(round(time,2)) \n")
+            write(f," Parámetros \n")
+            write(f," n, J, B, pasos, frecuencia, bins \n ")
+            write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]), $(param[6]) \n ")
+            #write(f," $n, $J, $B, $(pasos), $(freq) \n ")
+            write(f,"\n")
+            write(f,"T,M,E,CV \n")
+            for i in 1:length(t)
+                write(f,"$(t[i]), $(a1[i]),$(a2[i]), $(a3[i]) \n")
             end
+        end
+    end
+    function MakeDOSTable(s,energyIntervals,param,time)
+        cd("..")
+        cd("outputs")
+        cd(dest)
+        write("DOS.csv")
+        open("DOS.csv","w") do f 
+            write(f,"Densidad de estados")
+            write(f," ,Tiempo de ejecución, $(round(time,2)) \n")
+            write(f," Parámetros \n")
+            write(f," n, J, B, pasos, frecuencia, bins \n ")
+            write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]), $(param[6]) \n ")
+            write(f," E_i, E_f, S, DOS \n  ")
+            for i in 1:length(s)
+                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i]))),5)")
+            end
+        end
     end
 end
