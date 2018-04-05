@@ -1,5 +1,4 @@
 time=Dates.time()
-
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
@@ -16,11 +15,11 @@ push!(param,1)
 push!(param,0)
 push!(param,10^6)
 push!(param,10^4)
-push!(param,N^2/2)
+push!(param,convert(Int64,ceil(N^2/2)-N))
 
 #initLatt=rand([-1,1],param[1],param[1])
 initLatt=ones(param[1],param[1])
-X=Algorithms.WangLandau(param,initLatt,test=false)
+X=Algorithms.WangLandauSimple(param,initLatt,test=false)
 energyIntervals=X[1]
 s=X[2]
 tempArray=linspace(0.1,5,50)
@@ -40,4 +39,4 @@ InOut.MakeDirectories()
 InOut.MakePlots(tempArray,mag,ener,cv,param)
 time=Dates.time()-time
 InOut.MakeTable(tempArray,mag,ener,cv,param,time)
-InOut.MakeDOSTables(s,energyIntervals,param,time)
+InOut.MakeDOSTable(s,energyIntervals,param,time)
