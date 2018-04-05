@@ -8,7 +8,11 @@ module Auxiliar
             return x
         end
     end
-
+    function MirrorList!(l;test=false)
+        n=length(l)
+        aux=[l[i] for i in n:-1:2]
+        append!(l,aux)
+    end
     function MeanMod(x)
         if length(x)>0
             return mean(x)

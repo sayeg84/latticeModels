@@ -76,6 +76,9 @@ export MakeDirectories, MakePlots, MakeTable
                 write(f,"$(t[i]), $(a1[i]),$(a2[i]), $(a3[i]) \n")
             end
         end
+        cd("..")
+        cd("..")
+        cd("src")
     end
     function MakeDOSTable(s,energyIntervals,param,time)
         cd("..")
@@ -90,8 +93,11 @@ export MakeDirectories, MakePlots, MakeTable
             write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]), $(param[6]) \n ")
             write(f," E_i, E_f, S, DOS \n  ")
             for i in 1:length(s)
-                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i]))),5)")
+                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i])),5)) \n")
             end
         end
+        cd("..")
+        cd("..")
+        cd("src")
     end
 end
