@@ -90,12 +90,22 @@ export Energy, ProbCanonical
         return x
     end
 
-    function DOSMag(s,energyIntervals,temp,param)
+    function DOSMag(s,energyIntervals,temp,param;test=false)
         m=MagArray(energyIntervals,param)
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
             x=x+m[i]*exp(big(s[i])-ener/temp)
+            if test
+                println(energyIntervals[i])
+                println(m[i])
+                println(s[i])
+                println(ener)
+                println(ener/temp)
+                println(big(s[i])-ener/temp)
+                println(exp(big(s[i])-ener/temp))
+                println()
+            end
         end
         return x/(Partition(s,energyIntervals,temp,param))
     end

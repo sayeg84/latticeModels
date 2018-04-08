@@ -44,11 +44,11 @@ module Algorithms
 
     # =============================================
     # Wang-Landau beggining
-    function isFlat(hist)
+    function isFlat(hist;per=0.5)
         min=minimum(hist)
         max=maximum(hist)
         avg=mean(hist)
-        if min >= avg*0.5
+        if min >= avg*per
             return true
         else
             return false
@@ -194,13 +194,13 @@ module Algorithms
                 println()
             end
             if mod(n,10^5) == 0 && ~test
-                print("Iter: ")
+                print("iter: ")
                 println(n)
                 println()
             end
-            if n==10^9
+            if n==10^10
                 println("Exceded tolerance")
-                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:2])
+                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
                 Auxiliar.MirrorList!(s)
                 Auxiliar.MirrorList!(last)
                 return (energyIntervals,s,last)
@@ -209,7 +209,7 @@ module Algorithms
         end
         print("Iterations: ")
         println(n)
-        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:2])
+        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
         Auxiliar.MirrorList!(s)
         Auxiliar.MirrorList!(last)
         return (energyIntervals,s,last)

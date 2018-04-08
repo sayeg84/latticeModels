@@ -10,7 +10,7 @@ module Auxiliar
     end
     function MirrorList!(l;test=false)
         n=length(l)
-        aux=[l[i] for i in n:-1:2]
+        aux=[l[i] for i in n:-1:1]
         append!(l,aux)
     end
     function MeanMod(x)
@@ -65,9 +65,16 @@ module Auxiliar
         end
     end
     
-    function SearchSortedMod(x,a)
+    function SearchSortedMod(x,a;test=false)
         b=searchsortedlast(x,a)
-        if b==length(x)
+        if test
+            println("busq")
+            println(x)
+            println(a)
+            println(b)
+            println()
+        end
+            if b==length(x)
             return length(x)-1
         else
             return b
