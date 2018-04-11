@@ -120,13 +120,15 @@ module Algorithms
             end
             if n==10^9
                 println("Exceded tolerance")
+                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
                 return (energyIntervals,s,last)
             end
             n=n+1
         end
         print("Iterations: ")
         println(n)
-        return (energyIntervals,s,last)
+        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+        return (energyIntervals,s,last,n)
     end
     function WangLandauSimple(param,initLatt;test=false)
         last=[]
@@ -198,12 +200,14 @@ module Algorithms
                 println(n)
                 println()
             end
-            if n==10^10
+            if n==10^9
                 println("Exceded tolerance")
                 append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
                 Auxiliar.MirrorList!(s)
+                #normalization
+                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
                 Auxiliar.MirrorList!(last)
-                return (energyIntervals,s,last)
+                return (energyIntervals,s,last,n)
             end
             n=n+1
         end
@@ -211,7 +215,9 @@ module Algorithms
         println(n)
         append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
         Auxiliar.MirrorList!(s)
+        #normalization
+        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
         Auxiliar.MirrorList!(last)
-        return (energyIntervals,s,last)
+        return (energyIntervals,s,last,n)
     end
 end
