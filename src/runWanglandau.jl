@@ -9,12 +9,12 @@ println()
 println("Simulating")
 param=[]
 #asignamos los parámetros
-N=30
+N=16
 push!(param,N)
 push!(param,1)
 push!(param,0)
-push!(param,10^6)
-push!(param,10^4)
+push!(param,0)
+push!(param,0)
 push!(param,convert(Int64,ceil(N^2/2)-N))
 
 #initLatt=rand([-1,1],param[1],param[1])
@@ -32,7 +32,8 @@ for temp in tempArray
     push!(mag,StatEnsemble.DOSMag(s,energyIntervals,temp,param)/(param[1]^2))
 
 end
-
+param[4]=1
+param[4]=X[4]
 println()
 println("Writing Output")
 InOut.MakeDirectories()

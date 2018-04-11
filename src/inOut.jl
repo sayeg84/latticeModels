@@ -24,7 +24,7 @@ export MakeDirectories, MakePlots, MakeTable
             label="simulación con N=$(param[1]^2)"
         )
         #Plots.plot!(T,[magOnsager(t) for t in T],label="Solución teórica")
-        Plots.plot!([2.3,2.3],[0,1],linestyle=:dash,label="Temperatura crítica")
+        Plots.plot!([2.3,2.3],[0,1],linestyle=:dash,label="Temperatura crítica     ")
         Plots.savefig("mag.png")
         #display(p)
 
@@ -37,7 +37,7 @@ export MakeDirectories, MakePlots, MakeTable
         )
 
         #Plots.plot!(T,[energiaOnsager(t) for t in T],label="Solución teórica")
-        Plots.plot!([2.3,2.3],[-2,0],linestyle=:dash,label="Temperatura crítica")
+        Plots.plot!([2.3,2.3],[-2,0],linestyle=:dash,label="Temperatura crítica     ")
         Plots.savefig("ener.png")
         #display(p)
 
@@ -51,7 +51,7 @@ export MakeDirectories, MakePlots, MakeTable
             label="simulación con N=$(param[1]^2)"
         )
         #Plots.plot!(T,[cvOnsager(t) for t in T],label="Solución teórica")
-        Plots.plot!([2.3,2.3],[0,2],linestyle=:dash,label="Temperatura crítica")
+        Plots.plot!([2.3,2.3],[0,2],linestyle=:dash,label="Temperatura crítica      ")
         Plots.savefig("cv.png")
         cd("..")
         cd("..")
