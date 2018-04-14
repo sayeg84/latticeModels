@@ -9,7 +9,7 @@ println()
 println("Simulating")
 param=[]
 #asignamos los parámetros
-N=16
+N=6
 push!(param,N)
 push!(param,1)
 push!(param,0)
@@ -19,7 +19,7 @@ push!(param,convert(Int64,ceil(N^2/2)-N))
 
 #initLatt=rand([-1,1],param[1],param[1])
 initLatt=ones(param[1],param[1])
-X=Algorithms.WangLandauSimple(param,initLatt,test=false)
+X=Algorithms.WangLandauCycle(param,initLatt,test=false)
 energyIntervals=X[1]
 s=X[2]
 tempArray=linspace(0.1,5,50)

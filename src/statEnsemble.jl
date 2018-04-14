@@ -1,7 +1,7 @@
 include("auxiliar.jl")
+include("graphTheory.jl")
 module StatEnsemble
-export Energy, ProbCanonical
-    using Auxiliar
+    using Auxiliar,GraphTheory
     #funcion modulo auxiliar. Igual que el módulo normal, pero tal que mod(n,n)=n
 
 
@@ -23,6 +23,47 @@ export Energy, ProbCanonical
                 for j in 1:s[2]
                     e = e - B*latt[i,j] - J*func(latt,[i,j])*latt[i,j]*(1/2)
                 end
+            end
+        elseif dim==2
+            for i in 1:s[1]
+                for j in 1:s[2]
+                    for k in 1:s[3]
+                        e = e - B*latt[i,j,k] - J*func(latt,[i,j,k])*latt[i,j,k]*(1/2)
+                    end
+                end
+            end
+        else
+            error("dimension not soported")
+        end
+        return e
+        #=
+        for pos in CartesianRange(size(latt))
+            e=e-B*latt[pos]-J*func(latt,pos)*1/2
+        end
+        return e
+        =#
+    end
+
+
+    function PenalizedEnergy(latt,param,func,pen;test=false) 
+        e=0
+        s=size(latt)
+        dim=length(s)
+        B=param[3]
+        J=param[2]
+        if dim==1
+            for i in 1:s[1]
+                e = e - B*latt[i] - J*func(latt,[i])*latt[i]*(1/2)
+            end
+        elseif dim==2
+            for i in 1:s[1]
+                for j in 1:s[2]
+                    e = e - B*latt[i,j] - J*func(latt,[i,j])*latt[i,j]*(1/2)
+                end
+            end
+            l=GraphTheory.SearchAllCycles1(latt)
+            for pos in l 
+                e=e+pen*Auxiliar.GetValue(latt,pos)
             end
         elseif dim==2
             for i in 1:s[1]
@@ -95,7 +136,7 @@ export Energy, ProbCanonical
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
-            x=x+m[i]*exp(big(s[i])-ener/temp)
+           x=x+m[i]*exp(big(s[i])-ener/temp)
             if test
                 println(energyIntervals[i])
                 println(m[i])
@@ -139,7 +180,3 @@ export Energy, ProbCanonical
         return (x,y)
     end
 end
-#=
-x=[1 -1 -1 1 -1; -1 1 -1 -1 1; 1 1 1 1 -1; -1 1 -1 -1 1; -1 1 1 -1 1]
-println(StatEnsemble.Energy(x,[10,1,0,100,10],StatEnsemble.Auxiliar.SquareLatticeNeighbors))
-=#
