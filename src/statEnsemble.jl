@@ -8,42 +8,18 @@ module StatEnsemble
 
 
     #función para calcular la energía. Para mayor generalidad, esta función depende a su vez de una función de vecinos, denotada por la variable "func". Esta función nos debe de regresar la suma de los spines vecinos a un punto en un arreglo.
-    function Energy(latt,param,func;test=false)
+
+    function Energy(latt,param,neigLatt;test=false)
         e=0
         s=size(latt)
         dim=length(s)
         B=param[3]
         J=param[2]
-        if dim==1
-            for i in 1:s[1]
-                e = e - B*latt[i] - J*func(latt,[i])*latt[i]*(1/2)
-            end
-        elseif dim==2
-            for i in 1:s[1]
-                for j in 1:s[2]
-                    e = e - B*latt[i,j] - J*func(latt,[i,j])*latt[i,j]*(1/2)
-                end
-            end
-        elseif dim==2
-            for i in 1:s[1]
-                for j in 1:s[2]
-                    for k in 1:s[3]
-                        e = e - B*latt[i,j,k] - J*func(latt,[i,j,k])*latt[i,j,k]*(1/2)
-                    end
-                end
-            end
-        else
-            error("dimension not soported")
-        end
-        return e
-        #=
         for pos in CartesianRange(size(latt))
-            e=e-B*latt[pos]-J*func(latt,pos)*1/2
+            e=e-B*latt[pos]-J*latt[pos]*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2
         end
         return e
-        =#
     end
-
 
     function PenalizedEnergy(latt,param,func,pen;test=false) 
         e=0
@@ -80,23 +56,15 @@ module StatEnsemble
     end
 
 
-    function ProbCanonical(latt,pos,param,func,temp)
-        aux=param[2]*func(latt,pos)+param[3]
-        dim=length(size(latt))
+    function ProbCanonical(latt,pos,param,neigLatt,temp)
+        aux=param[2]*Auxiliar.NeighborSum(latt,neigLatt,pos)+param[3]
         beta=1/temp
-        if dim==1
-            return exp(-2*latt[pos[1]]*aux*beta)
-        elseif dim==2
-            return exp(-2*latt[pos[1],pos[2]]*aux*beta)
-        elseif dim==3
-            return exp(-2*latt[pos[1],pos[2],pos[3]]*aux*beta)
-        else
-            error("dimension not supported")
-        end
+        return exp(-2*latt[pos]*aux*beta)
     end
 
     function MagArray(energyIntervals,param;test=false)
         m=ones(param[1],param[1])
+        neigLatt=Auxiliar.NeighborIndexLattice(m,Auxiliar.SquareLatticeNeighborsIndex)
         aux=[]
         for i in 1:(length(energyIntervals)-1)
             push!(aux,[])
@@ -106,7 +74,7 @@ module StatEnsemble
             k=Auxiliar.Modl(i,2)
             for j in k:2:param[1]
                 mag=abs(sum(m))
-                e=Energy(m,param,Auxiliar.SquareLatticeNeighbors)/(param[1]^2)
+                e=Energy(m,param,neigLatt)/(param[1]^2)
                 pos=Auxiliar.SearchSortedMod(energyIntervals,e)
                 push!(aux[pos],mag)
                 if test

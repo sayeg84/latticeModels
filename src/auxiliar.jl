@@ -64,7 +64,20 @@ module Auxiliar
             latt[pos[1],pos[2],pos[3]]=-1*latt[pos[1],pos[2],pos[3]]
         end
     end
+    function RandomPosition(latt)
+        s=size(latt)
+        dim=length(s)
+        if dim==1
+            return CartesianIndex{1}(rand(1:s[1]))
+        elseif dim==2
+            return CartesianIndex{2}(rand(1:s[1]),rand(1:s[2]))
+        elseif dim==3
+            return CartesianIndex{3}(rand(1:s[1]),rand(1:s[2]),rand(1:s[3]))
+        else
+            error("Dimension not supported")
+        end
     
+    end
     function SearchSortedMod(x,a;test=false)
         b=searchsortedlast(x,a)
         if test
@@ -86,7 +99,7 @@ module Auxiliar
         dim=length(s)
         if dim==1
             v1=latt[Modl(pos[1]-1,s[1])]
-            v2=latt[Modl(pos[1]-2,s[1])]
+            v2=latt[Modl(pos[1]+1,s[1])]
             if test
                 println([v1 0 v2])
             end
@@ -116,4 +129,94 @@ module Auxiliar
             error("dimension not soported")
         end
     end
+
+    function SquareLatticeNeighborsValue(latt,pos;test=false)
+        s=size(latt)
+        dim=length(s)
+        if dim==1
+            v1=latt[Modl(pos[1]-1,s[1])]
+            v2=latt[Modl(pos[1]+1,s[1])]
+            if test
+                println([v1 0 v2])
+            end
+            return [v1,v2]
+        elseif dim==2
+            v1 = latt[Modl(pos[1]-1,s[1]), pos[2]]
+            v2 = latt[Modl(pos[1]+1,s[1]), pos[2]]
+            v3 = latt[pos[1],Modl(pos[2]-1,s[2])]
+            v4 = latt[pos[1],Modl(pos[2]+1,s[2])]
+            if test
+                println([0 v1 0; v3 0 v4 ; 0 v2 0])
+            end
+            return [v1,v2,v3,v4]
+        elseif dim==3
+            v1 = latt[Modl(pos[1]-1,s[1]), pos[2], pos[3]]
+            v2 = latt[Modl(pos[1]+1,s[1]), pos[2], pos[3]]
+            v3 = latt[pos[1], Modl(pos[2]-1,s[2]), pos[3]]
+            v4 = latt[pos[1], Modl(pos[2]+1,s[2]), pos[3]]
+            v5 = latt[pos[1], pos[2], Modl(pos[3]-1,s[3])]
+            v6 = latt[pos[1], pos[2], Modl(pos[3]+1,s[3])]
+            if test
+                println([0 v1 0; v3 0 v4 ; 0 v2 0])
+                println([v5 0 v6])
+            end
+            return [v1,v2,v3,v4,v5,v6]
+        else
+            error("dimension not soported")
+        end
+    end
+
+    function SquareLatticeNeighborsIndex(latt,pos;test=false)
+        s=size(latt)
+        dim=length(s)
+        if dim==1
+            v1=CartesianIndex(Modl(pos[1]-1,s[1]))
+            v2=CartesianIndex(Modl(pos[1]+1,s[1]))
+            if test
+                println([v1 0 v2])
+            end
+            return [v1,v2]
+        elseif dim==2
+            v1 = CartesianIndex(Modl(pos[1]-1,s[1]), pos[2])
+            v2 = CartesianIndex(Modl(pos[1]+1,s[1]), pos[2])
+            v3 = CartesianIndex(pos[1],Modl(pos[2]-1,s[2]))
+            v4 = CartesianIndex(pos[1],Modl(pos[2]+1,s[2]))
+            if test
+                println([0 v1 0; v3 0 v4 ; 0 v2 0])
+            end
+            return [v1,v2,v3,v4]
+        elseif dim==3
+            v1 = CartesianIndex(Modl(pos[1]-1,s[1]), pos[2], pos[3])
+            v2 = CartesianIndex(Modl(pos[1]+1,s[1]), pos[2], pos[3])
+            v3 = CartesianIndex(pos[1], Modl(pos[2]-1,s[2]), pos[3])
+            v4 = CartesianIndex(pos[1], Modl(pos[2]+1,s[2]), pos[3])
+            v5 = CartesianIndex(pos[1], pos[2], Modl(pos[3]-1,s[3]))
+            v6 = CartesianIndex(pos[1], pos[2], Modl(pos[3]+1,s[3]))
+            if test
+                println([0 v1 0; v3 0 v4 ; 0 v2 0])
+                println([v5 0 v6])
+            end
+            return [v1,v2,v3,v4,v5,v6]
+        else
+            error("dimension not soported")
+        end
+    end
+
+    function NeighborIndexLattice(latt,func;test=false)
+        s=size(latt)
+        fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(s)
+        for pos in CartesianRange(s)
+            fin[pos]=func(latt,pos)
+        end
+        return fin
+    end
+    function NeighborSum(latt,neigLatt,pos)
+        neigVal=0
+        for neigPos in neigLatt[pos]
+            neigVal=neigVal+latt[neigPos]
+        end
+        return neigVal
+    end
+        
+    
 end

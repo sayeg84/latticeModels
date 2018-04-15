@@ -14,6 +14,7 @@ push!(param,1)
 push!(param,0)
 push!(param,10^6)
 push!(param,10^4)
+push!(param,0)
 
 mag=zeros(length(t))
 ener=zeros(length(t))
@@ -26,11 +27,12 @@ for j in 0:(length(t)-1)
     temp3=[]
     X=[]
     for i in 1:5
-        X=Algorithms.Metropolis(temp,param,init)
+        neigLatt=Auxiliar.NeighborIndexLattice(init,Auxiliar.SquareLatticeNeighborsIndex)
+        X=Algorithms.Metropolis(temp,param,init,neigLatt)
         initial=convert(Int64,floor(length(X)*3/4))
         M=[abs(sum(X[k])) for k in initial:length(X)]
         push!(temp1,mean(M))
-        en=[StatEnsemble.Energy(x,param,Auxiliar.SquareLatticeNeighbors) for x in X]
+        en=[StatEnsemble.Energy(x,param,neigLatt) for x in X]
         temp4=[en[k] for k in initial:length(X)]
         push!(temp2,mean(temp4))
         push!(temp3,mean([x^2 for x in temp4]))
@@ -47,6 +49,7 @@ cv=[(cv[i]-ener[i]^2)/(t[i]^2) for i in 1:length(t)]
 #normalizating energy
 ener=ener*1/(param[1]^2)
 mag=mag*1/(param[1]^2)
+cv=cv*1/(param[1]^2)
 
 println()
 println("Writing Output")
