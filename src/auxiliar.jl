@@ -217,6 +217,13 @@ module Auxiliar
         end
         return neigVal
     end
-        
+    function Index(array,element)
+        b=find(x -> x==element,array)
+        if ~isempty(b)
+            return b[1]
+        else
+            return -1
+        end
+    end
     
 end

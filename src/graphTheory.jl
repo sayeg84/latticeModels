@@ -458,7 +458,127 @@ module GraphTheory
         end
         return Set(fin)
     end
-end
+    function WalkSimplePath(latt,pos,neigLatt;test=false) 
+        if (latt[pos]==0 || latt[pos]==-1 || latt[pos]==2)
+            return []
+        end
+        l=[]
+        initPos=pos
+        nm=deepcopy(neigLatt)
+        neig=nm[pos]
+        sameNeigs=[x for x in neig if latt[x]==latt[pos]]
+        if ~isempty(sameNeigs)
+            push!(l,pos)
+            newPos=rand(sameNeigs)
+            index=Auxiliar.Index(nm[newPos],pos)
+            deleteat!(nm[newPos],index)
+            while initPos!=newPos && ~in(newPos,l)
+                pos=newPos
+                neig=nm[pos]
+                sameNeigs=[x for x in neig if latt[x]==latt[pos]]
+                if ~isempty(sameNeigs)
+                    push!(l,pos)
+                    newPos=rand(sameNeigs)
+                    index=Auxiliar.Index(nm[newPos],pos)
+                    deleteat!(nm[newPos],index)
+                end
+            end
+            return l
+        else
+            return []
+        end
+    end
+    function WalkComplicatedPath(latt,pos,neigLatt;test=false) 
+        #if in(pos,neigLatt[pos])
+        #    nm=copy(neigLatt)
+        #    for b in nm[pos]
+        #        if b!=pos
+        #            i=Auxiliar.Index(nm[b],pos)
+        #            deleteat!(nm[b],i)
+        #        end
+        #    end
+        #    nm[pos]=[]
+        #    return ([pos],nm)
+        #end
+        l=WalkSimplePath(latt,pos,neigLatt;test=false)
+        nm=deepcopy(neigLatt)
+        if length(l)==1
+            nm[pos]=[]
+            return ([l[1],l[1]],nm)
+        end
+        if ~isempty(l)
+            b=[]
+            for p in l
+                n=[neig for neig in neigLatt[p] if ~in(neig,l)]
+                x=[neig for neig in n if (latt[p]==latt[neig])]
+                for t in n
+                    i=Auxiliar.Index(nm[t],p)
+                    deleteat!(nm[t],i)
+                    k=[a for a in n if a!=t]
+                    append!(nm[t],k)
+                end
+                append!(b,x)
+                nm[p]=[]
+            end
+            #=
+            for p in l
+                append!(b,[neig for neig in neigLatt[p] if (latt[p]==latt[neig] && ~in(neig,l))])
+            end
+            =#
+            for p in b
+                k=[a for a in b if a!=p]
+                append!(nm[p],k)
+                if length(b)==2 && b[1]==b[2]
+                #    println("single")
+                #    println()
+                #    println(pos)
+                #    println()   
+                #    println("cycle")
+                #    println(l)
+                #    println()
+#
+                #    println(p)
+                #    println()
+                #    println(nm[p])
+                #    println()
+                    push!(nm[p],p)
+                #    println(nm[p])
+                #    println()
+                #    println(k)
+                #    println()
+                end
+            end
+            return (Set(l),nm)
+        else
+            return ([pos],nm)
+        end
+    end
+    function SearchCycles(latt,neigLatt)
+        s=size(latt)
+        vis=zeros(s)
+        nm=deepcopy(neigLatt)
+        fin=[]
+        x=[]
+        while sum(vis) < prod(s)
+            pos=Auxiliar.RandomPosition(latt)
+            if vis[pos]!=1
+        
+        
+                x=WalkComplicatedPath(latt,pos,nm)
+        
+
+                l=x[1]
+                nm=deepcopy(x[2])
+                for p in l
+                    vis[p]=1
+                end
+                if length(l)>=2
+                    append!(fin,l)
+                end
+            end
+        end
+        return (Set(fin),x[2])
+    end
 #=
     m1=[
     0 0 0 0 1 1 1 1 1 ;
@@ -481,6 +601,7 @@ end
     0 0 0 0 0 0 0 0 2 ;
     0 0 0 0 0 0 0 0 0 ;
     ]
+    
     m4=[
     0 0 0 0 1 1 1 0 0 ;
     0 2 2 2 1 0 1 0 0 ;
@@ -488,13 +609,48 @@ end
     0 0 0 0 1 0 1 0 2 ;
     0 0 0 0 1 1 1 0 0 ;
     ]
+    =#
     #l=RemoveTails(m2)
     #x=WalkPath([3,5],[2,5],m3)
-    m5=rand([-1,1],100,100)
-    @time x=SearchAllCycles1(m5,test=false)
-    println(x)
-    =#
+    m3=[
+    0 0 0 0 1 1 1 1 0 0 ;
+    0 2 2 2 1 0 0 1 0 0 ;
+    0 0 0 0 1 1 1 1 2 2 ;
+    0 0 0 0 1 0 0 1 0 2 ;
+    0 0 0 0 1 1 1 1 0 0 ;
+    0 0 0 0 0 0 0 0 0 0 ;
+    ]
+
+    m3=[
+    0 0 0 0 1 1 1 1 0 0 ;
+    0 1 1 1 1 0 0 1 0 0 ;
+    0 0 0 0 1 1 1 1 1 1 ;
+    0 0 0 0 1 0 0 1 0 1 ;
+    0 0 0 0 1 1 1 1 0 1 ;
+    0 0 0 0 0 0 0 0 0 0 ;
+    ]
+    m3=RemoveTails(m3)
+    neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
+    pos=CartesianIndex((3,5))
+
+    @time x=SearchCycles(m3,neigLatt)
+    println(x[1])
+    #@time x=WalkComplicatedPath(m3,pos,neigLatt)
+    #println(x[1])
+    #println(x[2][CartesianIndex((3,6))])
+    #@time y=WalkComplicatedPath(m3,pos,neigLatt)
+    #println(y[1])
+    #println(y[2][CartesianIndex((3,6))])
+    #@time z=WalkComplicatedPath(m3,pos,neigLatt)
+    #println(z[1])
+    #println(z[2][CartesianIndex((3,6))])
+    #@time x=WalkSimplePath(m3,pos,neigLatt)
+    #println(x)
+    #pos=CartesianIndex((3,5))
+    #@time x=WalkPath(m3,pos,neigLatt)
+    #println(x)
     #=
     g=Erdos.Graph(ConstructAdjacencyMatrix(m))
     x=Erdos.conected_components(g)
     =#
+end
