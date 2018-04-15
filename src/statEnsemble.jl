@@ -9,7 +9,7 @@ module StatEnsemble
 
     #función para calcular la energía. Para mayor generalidad, esta función depende a su vez de una función de vecinos, denotada por la variable "func". Esta función nos debe de regresar la suma de los spines vecinos a un punto en un arreglo.
 
-    function Energy(latt,param,neigLatt;test=false)
+    function Energy(latt,param,neigLatt;printLog=false)
         e=0
         s=size(latt)
         dim=length(s)
@@ -21,7 +21,7 @@ module StatEnsemble
         return e
     end
 
-    function PenalizedEnergy(latt,param,func,pen;test=false) 
+    function PenalizedEnergy(latt,param,func,pen;printLog=false) 
         e=0
         s=size(latt)
         dim=length(s)
@@ -62,7 +62,7 @@ module StatEnsemble
         return exp(-2*latt[pos]*aux*beta)
     end
 
-    function MagArray(energyIntervals,param;test=false)
+    function MagArray(energyIntervals,param;printLog=false)
         m=ones(param[1],param[1])
         neigLatt=Auxiliar.NeighborIndexLattice(m,Auxiliar.SquareLatticeNeighborsIndex)
         aux=[]
@@ -77,7 +77,7 @@ module StatEnsemble
                 e=Energy(m,param,neigLatt)/(param[1]^2)
                 pos=Auxiliar.SearchSortedMod(energyIntervals,e)
                 push!(aux[pos],mag)
-                if test
+                if printLog
                     println(m)
                     println(mag)
                     println(e)
@@ -99,13 +99,13 @@ module StatEnsemble
         return x
     end
 
-    function DOSMag(s,energyIntervals,temp,param;test=false)
+    function DOSMag(s,energyIntervals,temp,param;printLog=false)
         m=MagArray(energyIntervals,param)
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
            x=x+m[i]*exp(big(s[i])-ener/temp)
-            if test
+            if printLog
                 println(energyIntervals[i])
                 println(m[i])
                 println(s[i])

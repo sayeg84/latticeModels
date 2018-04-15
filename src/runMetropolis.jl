@@ -16,6 +16,24 @@ push!(param,10^6)
 push!(param,10^4)
 push!(param,0)
 
+param=[N,
+# coupling constant J
+1,
+# magnetic field B J
+0,
+# maximum steps
+10^6,
+# save frecuency (Metropolis) or final iterations (Wang Landau)
+10^4,
+# energy bins (WangLandau)
+convert(Int64,ceil(N^2/2)-N),
+#cycle constant
+0]
+
+
+println("Simulating")
+println()
+
 mag=zeros(length(t))
 ener=zeros(length(t))
 cv=zeros(length(t))

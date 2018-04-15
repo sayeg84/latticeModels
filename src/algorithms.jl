@@ -5,7 +5,7 @@ module Algorithms
     #=
     Metropolis algorithm implementation
     =#
-    function Metropolis(temp::Float64,param,initLatt,neigLatt;test=false)
+    function Metropolis(temp::Float64,param,initLatt,neigLatt;printLog=false)
         matArr=[]
         mat=initLatt
         push!(matArr,copy(mat))
@@ -13,7 +13,7 @@ module Algorithms
             pos=Auxiliar.RandomPosition(mat)
             res=StatEnsemble.ProbCanonical(mat,pos,param,neigLatt,temp)
             t=rand()
-            if test
+            if printLog
                 print("iter = ")
                 println(i-1)
                 println("lattice")
@@ -49,7 +49,7 @@ module Algorithms
             return false
         end
     end
-    function WangLandau(param,initLatt,neigLatt;test=false)
+    function WangLandau(param,initLatt,neigLatt;printLog=false)
         last=[]
         hist=zeros(param[6])
         s=zeros(param[6])
@@ -67,7 +67,7 @@ module Algorithms
             p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
             tes=rand()
             last=[]
-            if test
+            if printLog
                 println("latt")
                 println(latt)
                 println("pos")
@@ -75,8 +75,7 @@ module Algorithms
                 println("hist")
                 println(hist)
                 println("entropy")
-                println(s)
-                
+                println(s)    
                 println("before")
                 println(energyBefore)
                 println("bin")
@@ -108,25 +107,25 @@ module Algorithms
                 println("change")
                 println(modfact)
             end
-            if mod(n,10^5) == 0 && ~test
+            if mod(n,10^5) == 0 && ~printLog
                 print("iter: ")
                 println(n)
                 println()
             end
             if n==10^9
                 println("Exceded tolerance")
-                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
                 return (energyIntervals,s,last)
             end
             n=n+1
         end
         print("Iterations: ")
         println(n)
-        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
         return (energyIntervals,s,last,n)
     end
 
-    function WangLandauSimple(param,initLatt,neigLatt;test=false)
+    function WangLandauSimple(param,initLatt,neigLatt;printLog=false)
         last=[]
         hist=zeros(param[6])
         s=zeros(param[6])
@@ -144,7 +143,184 @@ module Algorithms
             p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
             tes=rand()
             last=[]
-            if test
+            if printLog
+                println("latt")
+                println(latt)
+                println("pos")
+                println(pos)
+                println("hist")
+                println(hist)
+                println("entropy")
+                println(s)
+                println("before")
+                println(energyBefore)
+                println("bin")
+                println(p1)
+                println("after")
+                println(energyAfter)
+                println("bin")
+                println(p2)
+                println("probab")
+                println(exp(s[p1]-s[p2]))
+                println("rand")
+                println(tes)
+                println("avg")
+                println(mean(hist))
+                println("min")
+                println(minimum(hist))
+            end
+            η=exp(big(s[p1]-s[p2]))
+            if  tes < η && energyAfter <=0
+                latt[pos]=-1*latt[pos]
+            end
+            s[p1]=s[p1]+modfact
+            hist[p1]=hist[p1]+1
+            if isFlat(hist)
+                modfact=modfact*1/2
+                last=copy(hist)
+                hist=zeros(param[6])
+                println(n)
+                println("change")
+                println(modfact)
+            end
+            if mod(n,10^5) == 0 && ~printLog
+                print("iter: ")
+                println(n)
+                println()
+            end
+            if n==10^9
+                println("Exceded tolerance")
+                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
+                Auxiliar.MirrorList!(s)
+                #normalization
+                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+                Auxiliar.MirrorList!(last)
+                return (energyIntervals,s,last,n)
+            end
+            n=n+1
+        end
+        print("Iterations: ")
+        println(n)
+        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
+        Auxiliar.MirrorList!(s)
+        #normalization
+        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+        Auxiliar.MirrorList!(last)
+        return (energyIntervals,s,last,n)
+    end
+
+#=
+    function WangLandauSimple(param,initLatt;printLog=false)
+        last=[]
+        hist=zeros(param[6])
+        s=zeros(param[6])
+        energyIntervals=collect(linspace(-2,0,param[6]+1))
+        modfact=1
+        latt=copy(initLatt)
+        n=0
+        while (modfact>=1e-5)
+            pos=rand(1:param[1],length(size(latt)))
+            energyBefore=StatEnsemble.Energy(latt,param,Auxiliar.SquareLatticeNeighbors)
+            energyAfter=energyBefore+2*Auxiliar.GetValue(latt,pos)*(param[2]*Auxiliar.SquareLatticeNeighbors(latt,pos)+param[3])
+            energyBefore=energyBefore/((param[1])^2*param[2])
+            energyAfter=energyAfter/((param[1])^2*param[2])
+            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
+            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
+            tes=rand()
+            last=[]
+            if printLog
+                println("latt")
+                println(latt)
+                println("pos")
+                println(pos)
+                println("hist")
+                println(hist)
+                println("entropy")
+                println(s)
+                
+                println("before")
+                println(energyBefore)
+                println("bin")
+                println(p1)
+                println("after")
+                println(energyAfter)
+                println("bin")
+                println(p2)
+                println("probab")
+                println(exp(s[p1]-s[p2]))
+                println("rand")
+                println(tes)
+                println("avg")
+                println(mean(hist))
+                println("min")
+                println(minimum(hist))
+            end
+            a=exp(s[p1])
+            b=exp(s[p2])
+            η=exp(big(s[p1]-s[p2]))
+            if  tes < η && energyAfter <=0
+                Auxiliar.ChangeSpin!(latt,pos) 
+            end
+            s[p1]=s[p1]+modfact
+            hist[p1]=hist[p1]+1
+            if isFlat(hist)
+                modfact=modfact*1/2
+                last=copy(hist)
+                hist=zeros(param[6])
+                println("change")
+                println()
+                print("iter: ")
+                println(n)
+                print("modfact: ")
+                println(modfact)
+                println()
+            end
+            if mod(n,10^5) == 0 && ~printLog
+                print("iter: ")
+                println(n)
+                println()
+            end
+            if n==10^9
+                println("Exceded tolerance")
+                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
+                Auxiliar.MirrorList!(s)
+                #normalization
+                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+                Auxiliar.MirrorList!(last)
+                return (energyIntervals,s,last,n)
+            end
+            n=n+1
+        end
+        print("Iterations: ")
+        println(n)
+        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
+        Auxiliar.MirrorList!(s)
+        #normalization
+        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+        Auxiliar.MirrorList!(last)
+        return (energyIntervals,s,last,n)
+    end
+    =#
+
+    function WangLandauSimple(param,initLatt,neigLatt;printLog=false)
+        last=[]
+        hist=zeros(param[6])
+        s=zeros(param[6])
+        energyIntervals=collect(linspace(-2,0,param[6]+1))
+        modfact=1
+        latt=copy(initLatt)
+        n=0
+        while (modfact>=1e-5)
+            pos=Auxiliar.RandomPosition(latt)
+            energyBefore=StatEnsemble.PenalizedEnergy(latt,param,neigLatt)
+            energyAfter=energyBefore+2*latt[pos]*(param[2]*Auxiliar.NeighborSum(latt,neigLatt,pos)+param[3])
+            energyBefore=energyBefore/(param[1])^2
+            energyAfter=energyAfter/(param[1])^2
+            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
+            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
+            tes=rand()
+            last=[]
+            if printLog
                 println("latt")
                 println(latt)
                 println("pos")
@@ -185,7 +361,7 @@ module Algorithms
                 println("change")
                 println(modfact)
             end
-            if mod(n,10^5) == 0 && ~test
+            if mod(n,10^5) == 0 && ~printLog
                 print("iter: ")
                 println(n)
                 println()
@@ -195,7 +371,7 @@ module Algorithms
                 append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
                 Auxiliar.MirrorList!(s)
                 #normalization
-                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
                 Auxiliar.MirrorList!(last)
                 return (energyIntervals,s,last,n)
             end
@@ -206,190 +382,7 @@ module Algorithms
         append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
         Auxiliar.MirrorList!(s)
         #normalization
-        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
-        Auxiliar.MirrorList!(last)
-        return (energyIntervals,s,last,n)
-    end
-
-#=
-    function WangLandauSimple(param,initLatt;test=false)
-        last=[]
-        hist=zeros(param[6])
-        s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,0,param[6]+1))
-        modfact=1
-        latt=copy(initLatt)
-        n=0
-        while (modfact>=1e-5)
-            pos=rand(1:param[1],length(size(latt)))
-            energyBefore=StatEnsemble.Energy(latt,param,Auxiliar.SquareLatticeNeighbors)
-            energyAfter=energyBefore+2*Auxiliar.GetValue(latt,pos)*(param[2]*Auxiliar.SquareLatticeNeighbors(latt,pos)+param[3])
-            energyBefore=energyBefore/((param[1])^2*param[2])
-            energyAfter=energyAfter/((param[1])^2*param[2])
-            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
-            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
-            tes=rand()
-            last=[]
-            if test
-                println("latt")
-                println(latt)
-                println("pos")
-                println(pos)
-                println("hist")
-                println(hist)
-                println("entropy")
-                println(s)
-                
-                println("before")
-                println(energyBefore)
-                println("bin")
-                println(p1)
-                println("after")
-                println(energyAfter)
-                println("bin")
-                println(p2)
-                println("probab")
-                println(exp(s[p1]-s[p2]))
-                println("rand")
-                println(tes)
-                println("avg")
-                println(mean(hist))
-                println("min")
-                println(minimum(hist))
-            end
-            a=exp(s[p1])
-            b=exp(s[p2])
-            η=exp(big(s[p1]-s[p2]))
-            if  tes < η && energyAfter <=0
-                Auxiliar.ChangeSpin!(latt,pos) 
-            end
-            s[p1]=s[p1]+modfact
-            hist[p1]=hist[p1]+1
-            if isFlat(hist)
-                modfact=modfact*1/2
-                last=copy(hist)
-                hist=zeros(param[6])
-                println("change")
-                println()
-                print("iter: ")
-                println(n)
-                print("modfact: ")
-                println(modfact)
-                println()
-            end
-            if mod(n,10^5) == 0 && ~test
-                print("iter: ")
-                println(n)
-                println()
-            end
-            if n==10^9
-                println("Exceded tolerance")
-                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
-                Auxiliar.MirrorList!(s)
-                #normalization
-                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
-                Auxiliar.MirrorList!(last)
-                return (energyIntervals,s,last,n)
-            end
-            n=n+1
-        end
-        print("Iterations: ")
-        println(n)
-        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
-        Auxiliar.MirrorList!(s)
-        #normalization
-        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
-        Auxiliar.MirrorList!(last)
-        return (energyIntervals,s,last,n)
-    end
-    =#
-    function WangLandauCycle(param,initLatt;test=false)
-        last=[]
-        hist=zeros(param[6])
-        s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,0,param[6]+1))
-        modfact=1
-        latt=copy(initLatt)
-        n=0
-        while (modfact>=1e-5)
-            pos=rand(1:param[1],length(size(latt)))
-            energyBefore=StatEnsemble.PenalizedEnergy(latt,param,Auxiliar.SquareLatticeNeighbors,0.5)
-            energyAfter=energyBefore+2*Auxiliar.GetValue(latt,pos)*(param[2]*Auxiliar.SquareLatticeNeighbors(latt,pos)+param[3])
-            energyBefore=energyBefore/((param[1])^2*param[2])
-            energyAfter=energyAfter/((param[1])^2*param[2])
-            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
-            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
-            tes=rand()
-            last=[]
-            if test
-                println("latt")
-                println(latt)
-                println("pos")
-                println(pos)
-                println("hist")
-                println(hist)
-                println("entropy")
-                println(s)
-                
-                println("before")
-                println(energyBefore)
-                println("bin")
-                println(p1)
-                println("after")
-                println(energyAfter)
-                println("bin")
-                println(p2)
-                println("probab")
-                println(exp(s[p1]-s[p2]))
-                println("rand")
-                println(tes)
-                println("avg")
-                println(mean(hist))
-                println("min")
-                println(minimum(hist))
-            end
-            a=exp(s[p1])
-            b=exp(s[p2])
-            η=exp(big(s[p1]-s[p2]))
-            if  tes < η && energyAfter <=0
-                Auxiliar.ChangeSpin!(latt,pos) 
-            end
-            s[p1]=s[p1]+modfact
-            hist[p1]=hist[p1]+1
-            if isFlat(hist)
-                modfact=modfact*1/2
-                last=copy(hist)
-                hist=zeros(param[6])
-                println("change")
-                println()
-                print("iter: ")
-                println(n)
-                print("modfact: ")
-                println(modfact)
-                println()
-            end
-            if mod(n,10^5) == 0 && ~test
-                print("iter: ")
-                println(n)
-                println()
-            end
-            if n==10^9
-                println("Exceded tolerance")
-                append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
-                Auxiliar.MirrorList!(s)
-                #normalization
-                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
-                Auxiliar.MirrorList!(last)
-                return (energyIntervals,s,last,n)
-            end
-            n=n+1
-        end
-        print("Iterations: ")
-        println(n)
-        append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
-        Auxiliar.MirrorList!(s)
-        #normalization
-        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
         Auxiliar.MirrorList!(last)
         return (energyIntervals,s,last,n)
     end

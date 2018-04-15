@@ -8,7 +8,7 @@ module Auxiliar
             return x
         end
     end
-    function MirrorList!(l;test=false)
+    function MirrorList!(l;printLog=false)
         n=length(l)
         aux=[l[i] for i in n:-1:1]
         append!(l,aux)
@@ -78,9 +78,9 @@ module Auxiliar
         end
     
     end
-    function SearchSortedMod(x,a;test=false)
+    function SearchSortedMod(x,a;printLog=false)
         b=searchsortedlast(x,a)
-        if test
+        if printLog
             println("busq")
             println(x)
             println(a)
@@ -94,13 +94,13 @@ module Auxiliar
         end
     end
     #función de vecinos inmediatos utilizada para la función de peso del algoritmo metrópolis
-    function SquareLatticeNeighbors(latt,pos;test=false)
+    function SquareLatticeNeighbors(latt,pos;printLog=false)
         s=size(latt)
         dim=length(s)
         if dim==1
             v1=latt[Modl(pos[1]-1,s[1])]
             v2=latt[Modl(pos[1]+1,s[1])]
-            if test
+            if printLog
                 println([v1 0 v2])
             end
             return v1+v2
@@ -109,7 +109,7 @@ module Auxiliar
             v2 = latt[Modl(pos[1]+1,s[1]), pos[2]]
             v3 = latt[pos[1],Modl(pos[2]-1,s[2])]
             v4 = latt[pos[1],Modl(pos[2]+1,s[2])]
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
             end
             return v1+v2+v3+v4
@@ -120,7 +120,7 @@ module Auxiliar
             v4 = latt[pos[1], Modl(pos[2]+1,s[2]), pos[3]]
             v5 = latt[pos[1], pos[2], Modl(pos[3]-1,s[3])]
             v6 = latt[pos[1], pos[2], Modl(pos[3]+1,s[3])]
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
                 println([v5 0 v6])
             end
@@ -130,13 +130,13 @@ module Auxiliar
         end
     end
 
-    function SquareLatticeNeighborsValue(latt,pos;test=false)
+    function SquareLatticeNeighborsValue(latt,pos;printLog=false)
         s=size(latt)
         dim=length(s)
         if dim==1
             v1=latt[Modl(pos[1]-1,s[1])]
             v2=latt[Modl(pos[1]+1,s[1])]
-            if test
+            if printLog
                 println([v1 0 v2])
             end
             return [v1,v2]
@@ -145,7 +145,7 @@ module Auxiliar
             v2 = latt[Modl(pos[1]+1,s[1]), pos[2]]
             v3 = latt[pos[1],Modl(pos[2]-1,s[2])]
             v4 = latt[pos[1],Modl(pos[2]+1,s[2])]
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
             end
             return [v1,v2,v3,v4]
@@ -156,7 +156,7 @@ module Auxiliar
             v4 = latt[pos[1], Modl(pos[2]+1,s[2]), pos[3]]
             v5 = latt[pos[1], pos[2], Modl(pos[3]-1,s[3])]
             v6 = latt[pos[1], pos[2], Modl(pos[3]+1,s[3])]
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
                 println([v5 0 v6])
             end
@@ -166,13 +166,13 @@ module Auxiliar
         end
     end
 
-    function SquareLatticeNeighborsIndex(latt,pos;test=false)
+    function SquareLatticeNeighborsIndex(latt,pos;printLog=false)
         s=size(latt)
         dim=length(s)
         if dim==1
             v1=CartesianIndex(Modl(pos[1]-1,s[1]))
             v2=CartesianIndex(Modl(pos[1]+1,s[1]))
-            if test
+            if printLog
                 println([v1 0 v2])
             end
             return [v1,v2]
@@ -181,7 +181,7 @@ module Auxiliar
             v2 = CartesianIndex(Modl(pos[1]+1,s[1]), pos[2])
             v3 = CartesianIndex(pos[1],Modl(pos[2]-1,s[2]))
             v4 = CartesianIndex(pos[1],Modl(pos[2]+1,s[2]))
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
             end
             return [v1,v2,v3,v4]
@@ -192,7 +192,7 @@ module Auxiliar
             v4 = CartesianIndex(pos[1], Modl(pos[2]+1,s[2]), pos[3])
             v5 = CartesianIndex(pos[1], pos[2], Modl(pos[3]-1,s[3]))
             v6 = CartesianIndex(pos[1], pos[2], Modl(pos[3]+1,s[3]))
-            if test
+            if printLog
                 println([0 v1 0; v3 0 v4 ; 0 v2 0])
                 println([v5 0 v6])
             end
@@ -202,7 +202,7 @@ module Auxiliar
         end
     end
 
-    function NeighborIndexLattice(latt,func;test=false)
+    function NeighborIndexLattice(latt,func;printLog=false)
         s=size(latt)
         fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(s)
         for pos in CartesianRange(s)
