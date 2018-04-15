@@ -114,14 +114,14 @@ module Algorithms
             end
             if n==10^9
                 println("Exceded tolerance")
-                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
                 return (energyIntervals,s,last)
             end
             n=n+1
         end
         print("Iterations: ")
         println(n)
-        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
         return (energyIntervals,s,last,n)
     end
 
@@ -193,7 +193,7 @@ module Algorithms
                 append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
                 Auxiliar.MirrorList!(s)
                 #normalization
-                s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
                 Auxiliar.MirrorList!(last)
                 return (energyIntervals,s,last,n)
             end
@@ -204,7 +204,7 @@ module Algorithms
         append!(energyIntervals,[abs(energyIntervals[i]) for i in (param[6]):-1:1])
         Auxiliar.MirrorList!(s)
         #normalization
-        s=[s[i]-s[1]+printLog(2) for i in 1:length(s)]
+        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
         Auxiliar.MirrorList!(last)
         return (energyIntervals,s,last,n)
     end
@@ -302,11 +302,11 @@ module Algorithms
     end
     =#
 
-    function WangLandauSimple(param,initLatt,neigLatt;printLog=false)
+    function WangLandauCycle(param,initLatt,neigLatt;printLog=false)
         last=[]
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,0,param[6]+1))
+        energyIntervals=collect(linspace(-2,2+(param[7]/2),param[6]+1))
         modfact=1
         latt=copy(initLatt)
         n=0

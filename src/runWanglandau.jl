@@ -29,20 +29,21 @@ convert(Int64,ceil(N^2/2)-N),
 #making test run for compilation
 initLatt=ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
-Algorithms.WangLandauSimple(param,initLatt,neigLatt,test=false)
+Algorithms.WangLandauSimple(param,initLatt,neigLatt,printLog=false)
 
 
 println("Simulation")
 println()
+#start counting time of execution
+time=Dates.time()
 N=10
-
-param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N)]
+param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),0]
 
 initLatt=ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
 println("Simulating")
 
-X=Algorithms.WangLandauSimple(param,initLatt,neigLatt,test=false)
+X=Algorithms.WangLandauSimple(param,initLatt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
 tempArray=linspace(0.1,5,50)
