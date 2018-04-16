@@ -287,7 +287,6 @@ module GraphTheory
 
     function Cycles(latt,neigLatt;printLog=false)
         d=RemoveTails(RemoveOthers(deepcopy(latt),-1),neigLatt)
-        println(d)
         l=SearchCycles(d,neigLatt;printLog=printLog)
         return l[1]
     end
