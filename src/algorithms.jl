@@ -310,7 +310,6 @@ module Algorithms
         modfact=1
         latt=copy(initLatt)
         n=0
-        printLog=false
         println(printLog)
         while (modfact>=1e-5)
             pos=Auxiliar.RandomPosition(latt)
