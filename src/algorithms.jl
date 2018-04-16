@@ -310,9 +310,11 @@ module Algorithms
         modfact=1
         latt=copy(initLatt)
         n=0
+        printLog=false
+        println(printLog)
         while (modfact>=1e-5)
             pos=Auxiliar.RandomPosition(latt)
-            energyBefore=StatEnsemble.PenalizedEnergy(latt,param,neigLatt)
+            energyBefore=StatEnsemble.PenalizedEnergy(latt,param,neigLatt,printLog=printLog)
             energyAfter=energyBefore+2*latt[pos]*(param[2]*Auxiliar.NeighborSum(latt,neigLatt,pos)+param[3])
             energyBefore=energyBefore/(param[1])^2
             energyAfter=energyAfter/(param[1])^2
@@ -325,6 +327,13 @@ module Algorithms
                 println(latt)
                 println("pos")
                 println(pos)
+                println("neigs")
+                println(neigLatt[pos])
+                println()
+                println()
+                println(neigLatt)
+                println()
+                println()
                 println("hist")
                 println(hist)
                 println("entropy")
@@ -348,7 +357,7 @@ module Algorithms
                 println(minimum(hist))
             end
             η=exp(big(s[p1]-s[p2]))
-            if  tes < η && energyAfter <=0
+            if  tes < η
                 latt[pos]=-1*latt[pos]
             end
             s[p1]=s[p1]+modfact
