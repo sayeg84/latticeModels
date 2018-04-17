@@ -26,16 +26,16 @@ convert(Int64,ceil(N^2/2)-N),
 1]
 
 #making test run for compilation
-initLatt=ones(param[1],param[1])
-neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
-Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)
+#initLatt=ones(param[1],param[1])
+#neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
+#Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)
 
 
 println("Simulation")
 println()
 #start counting time of execution
 time=Dates.time()
-N=10
+N=6
 param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),1]
 
 initLatt=ones(param[1],param[1])
