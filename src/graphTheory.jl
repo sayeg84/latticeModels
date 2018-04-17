@@ -111,13 +111,19 @@ module GraphTheory
     function RemoveTails(latt,neigLatt;printLog=false)
         vis=zeros(size(latt))
         fin=deepcopy(latt)
+        m=deepcopy(latt)
         while sum(vis) < prod(size(latt))
-        pos=Auxiliar.RandomPosition(latt)
-            l=Tail(latt,pos,neigLatt,printLog=printLog)
+            pos=Auxiliar.RandomPosition(latt)
+            l=Tail(m,pos,neigLatt,printLog=printLog)
+            if printLog
+                println(pos)
+                println(l)
+            end
             if isempty(l)
                 vis[pos]=1
             else
                 for p in l
+                    m[p]=2
                     fin[p]=2
                     vis[p]=1
                 end
@@ -132,13 +138,13 @@ module GraphTheory
         if (latt[pos]==0 || latt[pos]==-1 || latt[pos]==2)
             return []
         end
-        l=[]
-        initPos=pos
         if printLog
             println()
             println("enter simple walk")
             println()
         end
+        l=[]
+        initPos=pos
         nm=deepcopy(neigLatt)
         neig=nm[pos]
         sameNeigs=[x for x in neig if latt[x]==latt[pos]]
@@ -146,37 +152,36 @@ module GraphTheory
             push!(l,pos)
             newPos=rand(sameNeigs)
             index=Auxiliar.Index(nm[newPos],pos)
-            deleteat!(nm[newPos],index)
-            while initPos!=newPos && ~in(newPos,l)
-                #println("aldo")
-                #println(newPos)
-                pos=newPos
-                #println("linea 1")
-                neig=nm[pos]
-                #println("linea 2")
-                sameNeigs=[x for x in neig if latt[x]==latt[pos]]
-                #println("linea 3")
-                if ~isempty(sameNeigs)
-                    #println("linea 4")
-                    push!(l,pos)
-                    #println("linea 5")
-                    newPos=rand(sameNeigs)
-                    #println("linea 6")
-                    index=Auxiliar.Index(nm[newPos],pos)
-                    #println("linea 7")
-                    deleteat!(nm[newPos],index)
-                    #println("linea 8" )
-                end
-                #println("linea 9")
-                #println(initPos)
-                #println(newPos)
-                #println(l)
-                #println(in(newPos,l))
+            try deleteat!(nm[newPos],index)
+            catch LoadError
             end
-            #println("sali")
+            while initPos!=newPos && ~in(newPos,l)
+                #println("infinite loop")
+                #println(initPos)
+                #println(pos)
+                #println(newPos)
+                #println(nm[initPos])
+                #println(nm[pos])
+                #println(nm[newPos])
+                #println(latt)
+                pos=newPos
+                sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
+                if ~isempty(sameNeigs)
+                    push!(l,pos)
+                    newPos=rand(sameNeigs)
+                    index=Auxiliar.Index(nm[newPos],pos)
+                    try deleteat!(nm[newPos],index)
+                    catch LoadError
+                        break
+                    end
+                else
+                    push!(l,pos)
+                    break
+                end
+            end
             return l
         else
-            return []
+            return [pos]
         end
         if printLog
             println()
@@ -184,6 +189,7 @@ module GraphTheory
             println()
         end
     end
+
     function WalkComplicatedPath(latt,pos,neigLatt;printLog=false) 
         if printLog
             println()
@@ -191,48 +197,44 @@ module GraphTheory
             println()
         end
         l=WalkSimplePath(latt,pos,neigLatt;printLog=printLog)
-        #println("salio")
         nm=deepcopy(neigLatt)
         if length(l)==1
+            l=[x for x in l]
             nm[pos]=[]
             return ([l[1],l[1],l[1]],nm)
         end
         if ~isempty(l)
-            b=[]
-            #println("llegó")
+            b=[] 
             for p in l
+                #println("infinite loop vol2")
                 n=[neig for neig in neigLatt[p] if ~in(neig,l)]
-                x=[neig for neig in n if (latt[p]==latt[neig])]                
+                x=[neig for neig in n if (latt[p]==latt[neig])]              
                 for t in n
                     i=Auxiliar.Index(nm[t],p)
-                    deleteat!(nm[t],i)
-                    k=[a for a in n if a!=t]
-                    append!(nm[t],k)
+                    try deleteat!(nm[newPos],index)
+                    catch LoadError
+                        break
+                    end
                 end
                 append!(b,x)
                 nm[p]=[]
             end
-            for p in b
-                k=[a for a in b if a!=p]
-                append!(nm[p],k)
-                if length(b)==2 && b[1]==b[2]
-                #    println("single")
-                #    println()
-                #    println(pos)
-                #    println()   
-                #    println("cycle")
-                #    println(l)
-                #    println()
-                #
-                #    println(p)
-                #    println()
-                #    println(nm[p])
-                #    println()
-                    push!(nm[p],p)
-                #    println(nm[p])
-                #    println()
-                #    println(k)
-                #    println()
+                #println(b)
+            if length(b)==2 && (b[1]==b[2])
+                p=b[1]
+                push!(nm[p],p)
+            else
+                b=Set(b)
+                if length(b)==2
+                    b=[x for x in b]
+                    append!(nm[b[1]],[b[2],b[2]])
+                    append!(nm[b[2]],[b[1],b[1]])
+                else
+                    for p in b
+                        #println("infinite loop vol3")
+                        k=[a for a in b if a!=p]
+                        append!(nm[p],k)
+                    end
                 end
             end
             return (Set(l),nm)
@@ -290,93 +292,27 @@ module GraphTheory
         l=SearchCycles(d,neigLatt;printLog=printLog)
         return l[1]
     end
-#=
-    m1=[
-    0 0 0 0 1 1 1 1 1 ;
-    0 0 0 0 1 0 0 0 1 ;
-    0 1 1 1 1 0 1 0 1 ;
-    0 0 0 0 0 0 0 0 1 ;
-    0 0 0 0 0 0 0 0 0 ;
-    ]
-    m2=[
-    0 0 0 0 1 1 1 0 0 ;
-    0 1 1 1 1 0 1 0 0 ;
-    0 0 0 0 1 1 1 1 1 ;
-    0 0 0 0 0 0 0 0 1 ;
-    0 0 0 0 0 0 0 0 0 ;
-    ]
-    m3=[
-    0 0 0 0 1 1 1 0 0 ;
-    0 2 2 2 1 0 1 0 0 ;
-    0 0 0 0 2 1 1 2 2 ;
-    0 0 0 0 0 0 0 0 2 ;
-    0 0 0 0 0 0 0 0 0 ;
-    ]
     
-    m4=[
-    0 0 0 0 1 1 1 0 0 ;
-    0 2 2 2 1 0 1 0 0 ;
-    0 0 0 0 1 1 1 2 2 ;
-    0 0 0 0 1 0 1 0 2 ;
-    0 0 0 0 1 1 1 0 0 ;
-    ]
- 
-    #l=RemoveTails(m2)
-    #x=WalkPath([3,5],[2,5],m3)
-    m3=[
-    0 0 0 0 1 1 1 1 0 0 ;
-    0 2 2 2 1 0 0 1 0 0 ;
-    0 0 0 0 1 1 1 1 2 2 ;
-    0 0 0 0 1 0 0 1 0 2 ;
-    0 0 0 0 1 1 1 1 0 0 ;
-    0 0 0 0 0 0 0 0 0 0 ;
-    ]
-    
-    m3=[
-    0 0 0 0 1 1 1 1 0 0 ;
-    0 1 1 1 1 0 0 1 0 0 ;
-    0 0 0 0 1 1 1 1 1 1 ;
-    0 0 0 0 1 0 0 1 0 1 ;
-    0 0 0 0 1 1 1 1 0 1 ;
-    0 0 0 0 0 0 0 0 0 0 ;
-    ]
-    m3=[
-        0 1 1 1 1 1 1 1 1 0 0 ;
-        0 0 0 0 1 0 0 0 1 0 0 ;
-        0 0 1 1 1 1 1 1 1 1 1 ;
-        0 0 1 0 1 0 1 0 1 0 1 ;
-        0 0 1 0 1 1 1 1 1 0 1 ;
-        0 0 1 0 0 0 1 0 0 0 0 ;
-        0 0 1 1 1 1 1 0 0 0 0 ;
-        0 0 0 0 0 0 0 0 0 0 0 ;
-        ]
-   
-
-       neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
-       @time a=Cycles(m3,neigLatt)
-       println(a)
-    for i in 1:2000
-        @time x=Cycles(m3,neigLatt)
-        if x==a println(true) end
-    end
-    =#
-
-    #@time x=WalkComplicatedPath(m3,pos,neigLatt)
-    #println(x[1])
-    #println(x[2][CartesianIndex((3,6))])
-    #@time y=WalkComplicatedPath(m3,pos,neigLatt)
-    #println(y[1])
-    #println(y[2][CartesianIndex((3,6))])
-    #@time z=WalkComplicatedPath(m3,pos,neigLatt)
-    #println(z[1])
-    #println(z[2][CartesianIndex((3,6))])
-    #@time x=WalkSimplePath(m3,pos,neigLatt)
-    #println(x)
-    #pos=CartesianIndex((3,5))
-    #@time x=WalkPath(m3,pos,neigLatt)
-    #println(x)
-    #=
-    g=Erdos.Graph(ConstructAdjacencyMatrix(m))
-    x=Erdos.conected_components(g)
-    =#
+    #m3=[-1.0 1.0 -1.0 -1.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0;
+    # -1.0 1.0 1.0 1.0 1.0 1.0 1.0 -1.0 -1.0 1.0;
+    # -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 1.0 1.0 1.0;
+    # -1.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0 1.0 1.0;
+    # 1.0 1.0 -1.0 -1.0 1.0 -1.0 -1.0 1.0 1.0 1.0;
+    # 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 1.0 -1.0;
+    # 1.0 -1.0 -1.0 -1.0 -1.0 1.0 1.0 1.0 1.0 1.0;
+    # 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 1.0 -1.0 1.0 1.0;
+    # -1.0 1.0 1.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0;
+    # 1.0 1.0 1.0 1.0 -1.0 1.0 1.0 -1.0 -1.0 -1.0]
+#
+#
+    #neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
+    #println(RemoveOthers(m3,-1))
+    #println(RemoveTails(RemoveOthers(m3,-1),neigLatt))
+    #neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
+    #@time a=Cycles(m3,neigLatt,printLog=false)
+    #println(a)
+    #for k in 1:2000
+    #    x=Cycles(m3,neigLatt,printLog=false)
+    #    println(x==a)
+    #end
 end
