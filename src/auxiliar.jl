@@ -54,6 +54,11 @@ module Auxiliar
         end
     end
 
+    function ChangeSpin(latt,pos)
+        m=copy(latt)
+        m[pos]=-1*m[pos]
+        return m
+    end
     function ChangeSpin!(latt,pos)
         dim=length(size(latt))
         if dim==1
