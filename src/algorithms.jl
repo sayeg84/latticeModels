@@ -5,13 +5,13 @@ module Algorithms
     #=
     Metropolis algorithm implementation
     =#
-    function Metropolis(temp::Float64,param,initLatt,neigLatt;printLog=false)
+    function Metropolis(temp::Float64,param,enerFunc,initLatt,neigLatt;printLog=false)
         matArr=[]
         mat=initLatt
         push!(matArr,copy(mat))
         for i in 1:(param[4]+1)
             pos=Auxiliar.RandomPosition(mat)
-            res=StatEnsemble.ProbCanonical(mat,pos,param,neigLatt,temp)
+            res=StatEnsemble.ProbCanonical(mat,pos,param,enerFunc,neigLatt,temp)
             t=rand()
             if printLog
                 print("iter = ")

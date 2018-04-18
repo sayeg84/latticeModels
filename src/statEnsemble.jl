@@ -32,13 +32,13 @@ module StatEnsemble
     end
 
 
-    function ProbCanonical(latt,pos,param,neigLatt,temp)
-        aux=param[2]*Auxiliar.NeighborSum(latt,neigLatt,pos)+param[3]
-        beta=1/temp
-        return exp(-2*latt[pos]*aux*beta)
+    function ProbCanonical(latt,pos,param,enerFunc,neigLatt,temp)
+        e1=enerFunc(latt,param,neigLatt)
+        e2=enerFunc(Auxiliar.ChangeSpin(latt,pos),param,neigLatt)
+        return exp((-e2+e1)/temp)
     end
 
-    function MagArray(energyIntervals,param;printLog=false)
+    function MagArray(energyIntervals,enerFunc,param;printLog=false)
         m=ones(param[1],param[1])
         neigLatt=Auxiliar.NeighborIndexLattice(m,Auxiliar.SquareLatticeNeighborsIndex)
         aux=[]
@@ -50,7 +50,7 @@ module StatEnsemble
             k=Auxiliar.Modl(i,2)
             for j in k:2:param[1]
                 mag=abs(sum(m))
-                e=Energy(m,param,neigLatt)/(param[1]^2)
+                e=enerFunc(m,param,neigLatt)/(param[1]^2)
                 pos=Auxiliar.SearchSortedMod(energyIntervals,e)
                 push!(aux[pos],mag)
                 if printLog
@@ -75,7 +75,7 @@ module StatEnsemble
         return x
     end
 
-    function DOSMag(s,energyIntervals,temp,param;printLog=false)
+    function DOSMag(s,energyIntervals,enerFunc,temp,param;printLog=false)
         m=MagArray(energyIntervals,param)
         x=0
         for i in 1:length(s)
@@ -114,13 +114,4 @@ module StatEnsemble
         return (x-DOSEnergy(s,energyIntervals,temp,param)^2)/temp^2
     end
 
-    function WangLandauValues(s,energyIntervals,tempArray,param)
-        x=[]
-        y=[]
-        for temp in tempArray
-            push!(x,DOSEnergy(s,energyIntervals,temp,param))
-            push!(y,DOSCV(s,energyIntervals,temp,param))
-        end
-        return (x,y)
-    end
 end

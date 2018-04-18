@@ -4,18 +4,10 @@ include("algorithms.jl")
 include("statEnsemble.jl")
 using Algorithms,InOut,StatEnsemble
 println("Begining")
-println()
-println("Simulating")
+println()|
 t=linspace(0.1,5,50)
-param=[]
-#asignamos los parámetros
-push!(param,10)
-push!(param,1)
-push!(param,0)
-push!(param,10^6)
-push!(param,10^4)
-push!(param,0)
 
+N=6
 param=[N,
 # coupling constant J
 1,
@@ -28,7 +20,7 @@ param=[N,
 # energy bins (WangLandau)
 convert(Int64,ceil(N^2/2)-N),
 #cycle constant
-0]
+0   ]
 
 
 println("Simulating")
@@ -46,7 +38,7 @@ for j in 0:(length(t)-1)
     X=[]
     for i in 1:5
         neigLatt=Auxiliar.NeighborIndexLattice(init,Auxiliar.SquareLatticeNeighborsIndex)
-        X=Algorithms.Metropolis(temp,param,init,neigLatt)
+        X=Algorithms.Metropolis(temp,param,StatEnsemble.Energy,init,neigLatt)
         initial=convert(Int64,floor(length(X)*3/4))
         M=[abs(sum(X[k])) for k in initial:length(X)]
         push!(temp1,mean(M))
