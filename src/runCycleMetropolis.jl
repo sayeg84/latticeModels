@@ -14,9 +14,9 @@ param=[N,
 # magnetic field B J
 0,
 # maximum steps
-10^6,
+10^5,
 # save frecuency (Metropolis) or final iterations (Wang Landau)
-10^4,
+10^3,
 # energy bins (WangLandau)
 convert(Int64,ceil(N^2/2)-N),
 #cycle constant

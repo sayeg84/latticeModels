@@ -76,7 +76,7 @@ module StatEnsemble
     end
 
     function DOSMag(s,energyIntervals,enerFunc,temp,param;printLog=false)
-        m=MagArray(energyIntervals,param)
+        m=MagArray(energyIntervals,enerFunc,param)
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
