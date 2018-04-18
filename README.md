@@ -7,20 +7,18 @@ Solution of multi-dimensional ising Models using Julia
 This simulation requires a well built, functioning installation of the Julia Programming Language.
 
 It also requires the following Julia packages intsalled and functioning:
+
 * Plots
 * PlotlyJS
 * Rsvg
-* Arg
+* ArgParse
 
 ## Running
 
-All code is contained in the 'src' folder. To run the simulation from a terminal, go to that directory and execute in a terminal:
+All code is contained in the 'src' folder. To run the simulation from a terminal, go to that directory and execute in a terminal any of the `.jl` files that begin with `run`. For example
 
 ```bash
-julia runWangLandau.jl
-```
-Or, alternatly
 
-```bash
-julia runMetropolis.jl
+home/isingModel$ cd src
+home/isingModel/src$ julia runMetropolis.jl
 ```
