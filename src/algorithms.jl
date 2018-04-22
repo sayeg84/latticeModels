@@ -296,7 +296,7 @@ module Algorithms
             if n==10^9
                 println("Exceded tolerance")
                 #normalization
-                s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+                s=[s[i]-s[1] for i in 1:length(s)]
                 return (energyIntervals,s,last,n)
             end
             n=n+1
@@ -304,7 +304,7 @@ module Algorithms
         print("Iterations: ")
         println(n)
         #normalization
-        s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+        s=[s[i]-s[1] for i in 1:length(s)]
         return (energyIntervals,s,last,n)
     end
 end
