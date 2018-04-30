@@ -62,6 +62,7 @@ module GraphTheory
         end
         return fin
     end
+
     function RemoveOthers(latt,oth;printLog=false)
         m=deepcopy(latt)
         for pos in CartesianRange(size(latt))
@@ -71,11 +72,15 @@ module GraphTheory
         end
         return m
     end
+
     function WalkTail(latt,pos,neigLatt;printLog=false)
         l=[pos]
         nm=deepcopy(neigLatt)
         sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
         newPos=sameNeigs[1]
+        if length(Set(sameNeigs))==1 &&  newPos==pos
+            return []
+        end
         push!(l,newPos)
         i=Auxiliar.Index(nm[newPos],pos)
         deleteat!(nm[newPos],i)
@@ -94,6 +99,7 @@ module GraphTheory
         end
         return l
     end
+
     function Tail(latt,pos,neigLatt;printLog=false)
         if (latt[pos]==-1 || latt[pos] == 0 || latt[pos] == 2 )
             return []
@@ -156,14 +162,6 @@ module GraphTheory
             catch LoadError
             end
             while initPos!=newPos && ~in(newPos,l)
-                #println("infinite loop")
-                #println(initPos)
-                #println(pos)
-                #println(newPos)
-                #println(nm[initPos])
-                #println(nm[pos])
-                #println(nm[newPos])
-                #println(latt)
                 pos=newPos
                 sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
                 if ~isempty(sameNeigs)
@@ -179,7 +177,12 @@ module GraphTheory
                     break
                 end
             end
-            return l
+            if (initPos==newPos)
+                return l
+            else
+                index=Auxiliar.Index(l,newPos)
+                return l[index:end]
+            end
         else
             return [pos]
         end
@@ -219,8 +222,7 @@ module GraphTheory
                 append!(b,x)
                 nm[p]=[]
             end
-                #println(b)
-            if length(b)==2 && (b[1]==b[2])
+            if length(Set(b))==1
                 p=b[1]
                 push!(nm[p],p)
             else
@@ -234,6 +236,7 @@ module GraphTheory
                         #println("infinite loop vol3")
                         k=[a for a in b if a!=p]
                         append!(nm[p],k)
+                        nm[p]=[x for x in Set(nm[p])]
                     end
                 end
             end
@@ -247,12 +250,18 @@ module GraphTheory
             println()
         end
     end
+    function RemoveElements!(latt,l;printLog=false)
+        for pos in l
+            latt[pos]=2
+        end
+    end
     function SearchCycles(latt,neigLatt;printLog=false)
         if printLog
             println()
             println("enter cycle search")
             println()
         end
+        m=copy(latt)
         s=size(latt)
         vis=zeros(s)
         nm=deepcopy(neigLatt)
@@ -268,13 +277,26 @@ module GraphTheory
             end
             #println(pos)
             if vis[pos]!=1
-                x=WalkComplicatedPath(latt,pos,nm,printLog=printLog)
+                x=WalkComplicatedPath(m,pos,nm,printLog=printLog)
                 l=x[1]
                 nm=x[2]
+                RemoveElements!(m,l)
+                m3=deepcopy(m)
+                m=RemoveTails(m,nm)
                 for p in l
                     vis[p]=1
                 end
                 if length(l)>=2
+                    if printLog
+                        println("cycle")
+                        println(l)
+                        println("old matrix before tailing")
+                        println(m3)
+                        println("new matrix")
+                        println(m)
+                        println("neigbors")
+                        println(nm)
+                    end
                     append!(fin,l)
                 end
             end
@@ -292,27 +314,4 @@ module GraphTheory
         l=SearchCycles(d,neigLatt;printLog=printLog)
         return l[1]
     end
-    
-    #m3=[-1.0 1.0 -1.0 -1.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0;
-    # -1.0 1.0 1.0 1.0 1.0 1.0 1.0 -1.0 -1.0 1.0;
-    # -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 1.0 1.0 1.0;
-    # -1.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0 1.0 1.0;
-    # 1.0 1.0 -1.0 -1.0 1.0 -1.0 -1.0 1.0 1.0 1.0;
-    # 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 1.0 -1.0;
-    # 1.0 -1.0 -1.0 -1.0 -1.0 1.0 1.0 1.0 1.0 1.0;
-    # 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 1.0 -1.0 1.0 1.0;
-    # -1.0 1.0 1.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0;
-    # 1.0 1.0 1.0 1.0 -1.0 1.0 1.0 -1.0 -1.0 -1.0]
-#
-#
-    #neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
-    #println(RemoveOthers(m3,-1))
-    #println(RemoveTails(RemoveOthers(m3,-1),neigLatt))
-    #neigLatt=Auxiliar.NeighborIndexLattice(m3,Auxiliar.SquareLatticeNeighborsIndex)
-    #@time a=Cycles(m3,neigLatt,printLog=false)
-    #println(a)
-    #for k in 1:2000
-    #    x=Cycles(m3,neigLatt,printLog=false)
-    #    println(x==a)
-    #end
 end
