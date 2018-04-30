@@ -43,7 +43,7 @@ initLatt=ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
 println("Simulating")
 
-X=Algorithms.WangLandauSimple(param,initLatt,neigLatt,printLog=false)
+X=Algorithms.WangLandau(param,initLatt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
 tempArray=linspace(0.1,5,50)
@@ -53,10 +53,9 @@ mag=[]
 for temp in tempArray
     push!(ener,StatEnsemble.DOSEnergy(s,energyIntervals,temp,param)/(param[1]^2))
     push!(cv,StatEnsemble.DOSCV(s,energyIntervals,temp,param)/(param[1]^2))
-    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,StatEnsemble.Energy,temp,param)/(param[1]^2))
-
+    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,X[3],StatEnsemble.Energy,temp,param))
 end
-param[4]=X[4]
+param[4]=X[5]
 println()
 println("Writing Output")
 InOut.MakeDirectories()

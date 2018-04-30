@@ -36,7 +36,7 @@ println()
 #start counting time of execution
 time=Dates.time()
 N=6
-param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),1]
+param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),0.1]
 
 initLatt=ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
@@ -45,7 +45,7 @@ println("Simulating")
 X=Algorithms.WangLandauCycle(param,initLatt,neigLatt)
 energyIntervals=X[1]
 s=X[2]
-tempArray=linspace(0.1,5,50)
+tempArray=linspace(0.1,50,200)
 ener=[]
 cv=[]
 mag=[]
@@ -55,7 +55,8 @@ for temp in tempArray
     push!(mag,StatEnsemble.DOSMag(s,energyIntervals,StatEnsemble.PenalizedEnergy,temp,param)/(param[1]^2))
 
 end
-param[4]=X[4]
+
+param[4]=X[5]
 println()
 println("Writing Output")
 InOut.MakeDirectories()

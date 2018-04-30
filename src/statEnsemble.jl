@@ -75,7 +75,26 @@ module StatEnsemble
         return x
     end
 
-    function DOSMag(s,energyIntervals,enerFunc,temp,param;printLog=false)
+    function DOSMag(s,energyIntervals,mag,enerFunc,temp,param;printLog=false)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*param[1]^2/2
+           x=x+mag[i]*exp(big(s[i])-ener/temp)
+            if printLog
+                println(energyIntervals[i])
+                println(m[i])
+                println(s[i])
+                println(ener)
+                println(ener/temp)
+                println(big(s[i])-ener/temp)
+                println(exp(big(s[i])-ener/temp))
+                println()
+            end
+        end
+        return abs(x)/(Partition(s,energyIntervals,temp,param))
+    end
+
+    function DOSMagNoSave(s,energyIntervals,enerFunc,temp,param;printLog=false)
         m=MagArray(energyIntervals,enerFunc,param)
         x=0
         for i in 1:length(s)
