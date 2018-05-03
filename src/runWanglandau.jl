@@ -53,7 +53,7 @@ mag=[]
 for temp in tempArray
     push!(ener,StatEnsemble.DOSEnergy(s,energyIntervals,temp,param)/(param[1]^2))
     push!(cv,StatEnsemble.DOSCV(s,energyIntervals,temp,param)/(param[1]^2))
-    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,X[3],StatEnsemble.Energy,temp,param))
+    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,X[3],StatEnsemble.Energy,temp,param)/(param[1]^2))
 end
 param[4]=X[5]
 println()
