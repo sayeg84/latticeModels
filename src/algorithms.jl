@@ -120,6 +120,7 @@ module Algorithms
             if n==10^9
                 println("Exceded tolerance")
                 s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+                mag=mag*(param[1]^2)
                 return (energyIntervals,s,mag,last,n)
             end
             n=n+1
@@ -127,6 +128,7 @@ module Algorithms
         print("Iterations: ")
         println(n)
         s=[s[i]-s[1]+log(2) for i in 1:length(s)]
+        mag=mag*(param[1]^2)
         return (energyIntervals,s,mag,last,n)
     end
 
@@ -205,6 +207,7 @@ module Algorithms
                 s=[s[i]-s[1]+log(2) for i in 1:length(s)]
                 Auxiliar.MirrorList!(mag)
                 Auxiliar.MirrorList!(last)
+                mag=mag*(param[1]^2)
                 return (energyIntervals,s,mag,last,n)
             end
             n=n+1
@@ -217,6 +220,7 @@ module Algorithms
         s=[s[i]-s[1]+log(2) for i in 1:length(s)]
         Auxiliar.MirrorList!(mag)
         Auxiliar.MirrorList!(last)
+        mag=mag*(param[1]^2)
         return (energyIntervals,s,mag,last,n)
     end
 
@@ -236,16 +240,19 @@ module Algorithms
                 println(latt)
             end
             try energyBefore=StatEnsemble.PenalizedEnergy(latt,param,neigLatt,printLog=printLog)
-            catch LoadError 
-                println(latt)
-                error("Wrong lattice")
+            catch LoadError
+                #println("antes")
+                #println(latt)
+                #println(energyBefore)
+                #error("Wrong lattice")
             end
             try energyAfter=StatEnsemble.PenalizedEnergy(Auxiliar.ChangeSpin(latt,pos),param,neigLatt,printLog=printLog)
             catch LoadError 
-                println(Auxiliar.ChangeSpin(latt,pos))
-                error("Wrong lattice")
+                #println("después")
+                #println(Auxiliar.ChangeSpin(latt,pos))
+                #println(energyAfter)
+                #error("Wrong lattice")
             end
-            #energyAfter=energyBefore+2*latt[pos]*(param[2]*Auxiliar.NeighborSum(latt,neigLatt,pos)+param[3])
             energyBefore=energyBefore/(param[1])^2
             energyAfter=energyAfter/(param[1])^2
             p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
@@ -312,6 +319,7 @@ module Algorithms
                 println("Exceded tolerance")
                 #normalization
                 s=[s[i]-s[1] for i in 1:length(s)]
+                mag=mag*(param[1]^2)
                 return (energyIntervals,s,mag,last,n)
             end
             n=n+1
@@ -320,6 +328,7 @@ module Algorithms
         println(n)
         #normalization
         s=[s[i]-s[1] for i in 1:length(s)]
+        mag=mag*(param[1]^2)
         return (energyIntervals,s,mag,last,n)
     end
 end
