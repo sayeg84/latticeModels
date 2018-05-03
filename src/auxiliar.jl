@@ -98,7 +98,7 @@ module Auxiliar
             return b
         end
     end
-    #función de vecinos inmediatos utilizada para la función de peso del algoritmo metrópolis
+    #square lattice neighbors sum
     function SquareLatticeNeighbors(latt,pos;printLog=false)
         s=size(latt)
         dim=length(s)
@@ -135,7 +135,7 @@ module Auxiliar
         end
     end
 
-    function SquareLatticeNeighborsValue(latt,pos;printLog=false)
+    function SquareLatticeNeighborsArray(latt,pos;printLog=false)
         s=size(latt)
         dim=length(s)
         if dim==1
