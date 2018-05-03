@@ -1,97 +1,31 @@
 include("auxiliar.jl")
 module GraphTheory
     using Auxiliar
-    function Modl(a::Int64,b::Int64)
-        x=mod(a,b)
-        if x==0
-            return b
-        else
-            return x
-        end
-    end
-    function MtoV(m;printLog=false)
-        v=[]
-        for i in 1:size(m)[1]
-            for j in 1:size(m)[2]
-                push!(v,m[i,j])
-            end
-        end
-        return v
-    end
-    function VtoM(v,text=false)
-        s=1
-        try s=convert(Int64,sqrt(length(v))) 
-        catch InexactError; error("Vector is not perfect square")
-        end
-        m=zeros(s,s)
-        for i in 1:s
-            for j in 1:s 
-                m[i,j]=v[j+(i-1)*s]
-            end
-        end
-        return m
-    end
-    function MtoVpos(p,size)
-        return p[2]+size[2]*(p[1]-1)
-    end
-    function VtoMpos(p,size)
-        i=ceil(p/size[2])
-        i=convert(Int64,i)
-        j=Modl(p,size[2])
-        return [i,j]
-    end
-    function ConstructAdjacencyMatrix(m;printLog=false)
-        x=size(m)[1]
-        y=size(m)[2]
-        fin=zeros(x*y,x*y)
-        for i in 1:x 
-            for j in 1:y 
-                if m[i,j]==m[Modl(i+1,x),j]
-                    fin[MtoVpos([i,j],[x,y]),MtoVpos([Modl(i+1,x),j],[x,y])]=1
-                end
-                if m[i,j]==m[Modl(i-1,x),j]
-                    fin[MtoVpos([i,j],[x,y]),MtoVpos([Modl(i-1,x),j],[x,y])]=1
-                end
-                if m[i,j]==m[i,Modl(j+1,y)]
-                    fin[MtoVpos([i,j],[x,y]),MtoVpos([i,Modl(j+1,y)],[x,y])]=1
-                end
-                if m[i,j]==m[i,Modl(j-1,y)]
-                    fin[MtoVpos([i,j],[x,y]),MtoVpos([i,Modl(j-1,y)],[x,y])]=1
-                end
-            end
-        end
-        return fin
-    end
-
-    function RemoveOthers(latt,oth;printLog=false)
-        m=deepcopy(latt)
-        for pos in CartesianRange(size(latt))
-            if m[pos]==oth 
-                m[pos]=2
-            end
-        end
-        return m
-    end
-
     function WalkTail(latt,pos,neigLatt;printLog=false)
         l=[pos]
         nm=deepcopy(neigLatt)
-        sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
+        sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
         newPos=sameNeigs[1]
+        #self loop exception
         if length(Set(sameNeigs))==1 &&  newPos==pos
             return []
         end
         push!(l,newPos)
-        i=Auxiliar.Index(nm[newPos],pos)
-        deleteat!(nm[newPos],i)
+        #deleting old links
+        index=Auxiliar.Index(nm[pos],newPos)
+        deleteat!(nm[pos],index)
+        index=Auxiliar.Index(nm[newPos],pos)
+        deleteat!(nm[newPos],index)
         newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos]]
         while ~(isempty(newNeigs) || length(newNeigs)>=2)
             pos=newPos
-            sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
+            sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
             newPos=sameNeigs[1]
             push!(l,newPos)
-            i=Auxiliar.Index(nm[newPos],pos)
-            deleteat!(nm[newPos],i)
+            index=Auxiliar.Index(nm[pos],newPos)
+            deleteat!(nm[pos],index)
+            index=Auxiliar.Index(nm[newPos],pos)
+            deleteat!(nm[newPos],index)
             newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos]]
         end
         if length(l)>=2
@@ -99,12 +33,12 @@ module GraphTheory
         end
         return l
     end
-
     function Tail(latt,pos,neigLatt;printLog=false)
         if (latt[pos]==-1 || latt[pos] == 0 || latt[pos] == 2 )
             return []
         end
         sameNeigs=[x for x in neigLatt[pos] if latt[x]==latt[pos]]
+        #special case of single tail
         if isempty(sameNeigs)
             return [pos]
         elseif length(sameNeigs)>1
@@ -113,7 +47,6 @@ module GraphTheory
             return WalkTail(latt,pos,neigLatt,printLog=printLog)
         end
     end
-
     function RemoveTails(latt,neigLatt;printLog=false)
         vis=zeros(size(latt))
         fin=deepcopy(latt)
@@ -137,9 +70,6 @@ module GraphTheory
         end
         return fin
     end
-
-
-
     function WalkSimplePath(latt,pos,neigLatt;printLog=false)
         if (latt[pos]==0 || latt[pos]==-1 || latt[pos]==2)
             return []
@@ -152,11 +82,16 @@ module GraphTheory
         l=[]
         initPos=pos
         nm=deepcopy(neigLatt)
-        neig=nm[pos]
-        sameNeigs=[x for x in neig if latt[x]==latt[pos]]
+        sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
         if ~isempty(sameNeigs)
             push!(l,pos)
             newPos=rand(sameNeigs)
+            #self loop exception
+            if length(Set(sameNeigs))==1 &&  newPos==pos
+                return [pos]
+            end
+            index=Auxiliar.Index(nm[pos],newPos)
+            deleteat!(nm[pos],index)
             index=Auxiliar.Index(nm[newPos],pos)
             try deleteat!(nm[newPos],index)
             catch LoadError
@@ -167,10 +102,12 @@ module GraphTheory
                 if ~isempty(sameNeigs)
                     push!(l,pos)
                     newPos=rand(sameNeigs)
+                    index=Auxiliar.Index(nm[pos],newPos)
+                    deleteat!(nm[pos],index)
                     index=Auxiliar.Index(nm[newPos],pos)
                     try deleteat!(nm[newPos],index)
                     catch LoadError
-                        break
+                        continue
                     end
                 else
                     push!(l,pos)
@@ -192,7 +129,6 @@ module GraphTheory
             println()
         end
     end
-
     function WalkComplicatedPath(latt,pos,neigLatt;printLog=false) 
         if printLog
             println()
@@ -210,19 +146,17 @@ module GraphTheory
             b=[] 
             for p in l
                 #println("infinite loop vol2")
-                n=[neig for neig in neigLatt[p] if ~in(neig,l)]
-                x=[neig for neig in n if (latt[p]==latt[neig])]              
+                n=[neig for neig in nm[p] if ~in(neig,l) && in(p,nm[neig])]
+                x=[neig for neig in n if (latt[p]==latt[neig])]        
                 for t in n
-                    i=Auxiliar.Index(nm[t],p)
-                    try deleteat!(nm[newPos],index)
-                    catch LoadError
-                        break
-                    end
+                    index=Auxiliar.Index(nm[t],p)
+                    deleteat!(nm[t],index)
                 end
                 append!(b,x)
                 nm[p]=[]
             end
-            if length(Set(b))==1
+            #exception for single points between cycles
+            if length(Set(b))==1 && length(b)>1
                 p=b[1]
                 push!(nm[p],p)
             else
@@ -250,11 +184,24 @@ module GraphTheory
             println()
         end
     end
+
+
     function RemoveElements!(latt,l;printLog=false)
         for pos in l
             latt[pos]=2
         end
     end
+
+    function RemoveOthers(latt,oth;printLog=false)
+        m=deepcopy(latt)
+        for pos in CartesianRange(size(latt))
+            if m[pos]==oth 
+                m[pos]=2
+            end
+        end
+        return m
+    end
+
     function SearchCycles(latt,neigLatt;printLog=false)
         if printLog
             println()
