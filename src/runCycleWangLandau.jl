@@ -35,17 +35,17 @@ println("Simulation")
 println()
 #start counting time of execution
 time=Dates.time()
-N=10
-param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),0.8]
+N=6
+param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)),1]
 
-initLatt=ones(param[1],param[1])
+initLatt=-1*ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
 println("Simulating")
 
-X=Algorithms.WangLandauCycle(param,initLatt,neigLatt)
+X=Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
-tempArray=linspace(0.1,20,200)
+tempArray=linspace(0.1,3,100)
 ener=[]
 cv=[]
 mag=[]

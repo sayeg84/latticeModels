@@ -49,6 +49,13 @@ module Algorithms
             return false
         end
     end
+    function isFlatCount(hist;n=300)
+        if maximum(hist)>=n
+            return true
+        else
+            return false
+        end
+    end
     function WangLandau(param,initLatt,neigLatt;printLog=false)
         last=[]
         globalHist=zeros(param[6])
@@ -230,7 +237,7 @@ module Algorithms
         mag=zeros(param[6])
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,2+(param[7]/2),param[6]+1))
+        energyIntervals=collect(linspace(-2,2,param[6]+1))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -295,7 +302,7 @@ module Algorithms
                 println(minimum(hist))
             end
             globalHist[p1]+=1
-            mag[p1]=(mag[p1]*(globalHist[p1]-1)+sum(latt)/(param[1]^2))*1/(globalHist[p1])
+            mag[p1]=(mag[p1]*(globalHist[p1]-1)+abs(sum(latt))/(param[1]^2))*1/(globalHist[p1])
             η=exp(big(s[p1]-s[p2]))
             if  tes < η
                 latt[pos]=-1*latt[pos]

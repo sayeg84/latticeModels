@@ -51,7 +51,7 @@ export MakeDirectories, MakePlots, MakeTable
             label="simulación con N=$(param[1]^2)"
         )
         #Plots.plot!(T,[cvOnsager(t) for t in T],label="Solución teórica")
-        Plots.plot!([2.3,2.3],[0,2],linestyle=:dash,label="Temperatura crítica      ")
+        Plots.plot!([2.3,2.3],[0,2],ylim=(0,2),linestyle=:dash,label="Temperatura crítica      ")
         Plots.savefig("cv.png")
         cd("..")
         cd("..")

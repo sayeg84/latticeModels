@@ -22,7 +22,7 @@ module StatEnsemble
         B=param[3]
         J=param[2]
         for pos in CartesianRange(size(latt))
-            e=e-(B-J*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]
+            e=e-(B+J*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]
         end
         cycles=GraphTheory.Cycles(latt,neigLatt,printLog=printLog)
         for pos in cycles

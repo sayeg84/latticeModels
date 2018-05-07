@@ -20,7 +20,7 @@ param=[N,
 # energy bins (WangLandau)
 convert(Int64,ceil(N^2/2)-N),
 #cycle constant
-1]
+0.1]
 
 
 println("Simulating")
