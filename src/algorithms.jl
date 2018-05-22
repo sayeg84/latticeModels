@@ -49,7 +49,7 @@ module Algorithms
             return false
         end
     end
-    function isFlatCount(hist;n=300)
+    function isFlatCount(hist;n=1000)
         if maximum(hist)>=n
             return true
         else
@@ -237,7 +237,7 @@ module Algorithms
         mag=zeros(param[6])
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,2,param[6]+1))
+        energyIntervals=collect(linspace(-2,2+param[7]/2,param[6]+1))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -309,7 +309,7 @@ module Algorithms
             end
             s[p1]+=modfact
             hist[p1]+=1
-            if isFlat(hist)
+            if isFlatCount(hist)
                 modfact=modfact*1/2
                 last=copy(hist)
                 hist=zeros(param[6])
