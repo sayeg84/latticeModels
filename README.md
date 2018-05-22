@@ -6,7 +6,7 @@ Solution of multi-dimensional ising Models using Julia
 
 This simulation requires a well built, functioning installation of the Julia Programming Language.
 
-It also requires the following Julia packages intsalled and functioning:
+It also requires the following Julia packages installed and functioning:
 
 * Plots
 * PlotlyJS
