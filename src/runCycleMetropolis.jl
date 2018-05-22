@@ -2,17 +2,44 @@ time=Dates.time()
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
-using Algorithms,InOut,StatEnsemble
+using Algorithms,InOut,StatEnsemble,ArgParse
+
+function ParseCommandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "-N", "--Nlatt" 
+            help = "Lattice size"
+            arg_type=Int64
+            default = 10
+         "-J", "--Jconst"
+            help = "Coupling constant of Ising model"
+            arg_type = Float64
+            default = 1.0
+         "-B", "--Bfield"
+            help = "Magnetic field"
+            arg_type = Float64
+            default = 0.0
+         "-C", "--Cconst"
+            help = "Cycle constant"
+            arg_type = Float64
+            default = 1.0
+    end
+    return parse_args(s)
+end
+
+parsedArgs = ParseCommandline()
+
+
 println("Begining")
 println()
 t=linspace(0.1,5,50)
-
-N=6
+N=parsedArgs["Nlatt"]
 param=[N,
 # coupling constant J
-1,
+parsedArgs["Jconst"],
 # magnetic field B J
-0,
+parsedArgs["Bfield"],
 # maximum steps
 10^5,
 # save frecuency (Metropolis) or final iterations (Wang Landau)
@@ -20,7 +47,7 @@ param=[N,
 # energy bins (WangLandau)
 convert(Int64,ceil(N^2/2)-N),
 #cycle constant
-0.1]
+parsedArgs["Cconst"]]
 
 
 println("Simulating")

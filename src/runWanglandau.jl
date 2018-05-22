@@ -1,11 +1,37 @@
-time=Dates.time()
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
-using Algorithms,InOut,StatEnsemble
+using Algorithms,InOut,StatEnsemble,ArgParse
+
+function ParseCommandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "-N", "--Nlatt" 
+            help = "Lattice size"
+            arg_type=Int64
+            default = 10
+         "-J", "--Jconst"
+            help = "Coupling constant of Ising model"
+            arg_type = Float64
+            default = 1.0
+         "-B", "--Bfield"
+            help = "Magnetic field"
+            arg_type = Float64
+            default = 0.0
+         "-C", "--Cconst"
+            help = "Cycle constant"
+            arg_type = Float64
+            default = 1.0
+    end
+    return parse_args(s)
+end
+
+parsedArgs = ParseCommandline()
 
 println("Begining")
 println()
+
 
 #### parameter asignation
 
@@ -32,17 +58,17 @@ neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsI
 Algorithms.WangLandauSimple(param,initLatt,neigLatt,printLog=false)
 
 
-println("Simulation")
-println()
+
 #start counting time of execution
 time=Dates.time()
-N=10
-param=[N,1,0,0,0,convert(Int64,ceil(N^2/2)-N),0]
+N=parsedArgs["Nlatt"]
 
+param=[N,parsedArgs["Jconst"],parsedArgs["Bfield"],0,0,convert(Int64,ceil(N^2/2)-N),parsedArgs["Cconst"]]
 initLatt=ones(param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
-println("Simulating")
 
+println("Simulating")
+println()
 X=Algorithms.WangLandau(param,initLatt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
