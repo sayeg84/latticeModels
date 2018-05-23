@@ -1,7 +1,7 @@
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
-using Algorithms,InOut,StatEnsemble,ArgParse
+using Algorithms,InOut,StatEnsemble, ArgParse
 
 function ParseCommandline()
     s = ArgParseSettings()
