@@ -309,7 +309,7 @@ module Algorithms
             end
             s[p1]+=modfact
             hist[p1]+=1
-            if isFlatCount(hist)
+            if isFlat(hist)
                 modfact=modfact*1/2
                 last=copy(hist)
                 hist=zeros(param[6])

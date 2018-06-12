@@ -47,7 +47,7 @@ param=[N,
 # save frecuency (Metropolis) or final iterations (Wang Landau)
 0,
 # energy bins (WangLandau)
-convert(Int64,ceil(N^2/2)-N),
+convert(Int32,ceil(N^2/2)-N),
 #cycle constant
 1]
 
@@ -60,9 +60,9 @@ convert(Int64,ceil(N^2/2)-N),
 #start counting time of execution
 time=Dates.time()
 N=parsedArgs["Nlatt"]
-param=[N,parsedArgs["Jconst"],parsedArgs["Bfield"],0,0,convert(Int64,ceil(N^2/2)-N),parsedArgs["Cconst"]]
+param=[N,parsedArgs["Jconst"],parsedArgs["Bfield"],0,0,convert(Int32,ceil(N^2/2)-N),parsedArgs["Cconst"]]
 
-initLatt=-1*ones(param[1],param[1])
+initLatt=-1*ones(Int8,param[1],param[1])
 neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
 println("Simulating")
 println()

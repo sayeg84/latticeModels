@@ -76,7 +76,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("enter simple walk")
+            println("entering simple walk")
             println()
         end
         l=[]
@@ -125,14 +125,14 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit simple walk")
+            println("leaving simple walk")
             println()
         end
     end
     function WalkComplicatedPath(latt,pos,neigLatt;printLog=false) 
         if printLog
             println()
-            println("enter complicated walk")
+            println("entering complicated walk")
             println()
         end
         l=WalkSimplePath(latt,pos,neigLatt;printLog=printLog)
@@ -180,7 +180,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit complicated walk")
+            println("leaving complicated walk")
             println()
         end
     end
@@ -202,10 +202,16 @@ module GraphTheory
         return m
     end
 
+    function RemoveDuplicates!(neigLatt)
+        for pos in CartesianRange(size(neigLatt))
+            neigLatt[pos]=[a for a in Set(neigLatt[pos])]
+        end
+    end
+
     function SearchCycles(latt,neigLatt;printLog=false)
         if printLog
             println()
-            println("enter cycle search")
+            println("entering cycle search")
             println()
         end
         m=copy(latt)
@@ -227,6 +233,7 @@ module GraphTheory
                 x=WalkComplicatedPath(m,pos,nm,printLog=printLog)
                 l=x[1]
                 nm=x[2]
+                RemoveDuplicates!(nm)
                 RemoveElements!(m,l)
                 m3=deepcopy(m)
                 m=RemoveTails(m,nm)
@@ -250,7 +257,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit cycle search")
+            println("leaving cycle search")
             println()
         end
         return (Set(fin),x[2])

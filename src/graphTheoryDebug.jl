@@ -37,7 +37,7 @@ module GraphTheory
         if (latt[pos]==-1 || latt[pos] == 0 || latt[pos] == 2 )
             return []
         end
-        sameNeigs=[x for x in neigLatt[pos] if latt[x]==latt[pos]]
+        sameNeigs=[x for x in neigLatt[pos] if latt[x]==latt[pos] && in(pos,neigLatt[x])]
         #special case of single tail
         if isempty(sameNeigs)
             return [pos]
@@ -76,7 +76,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("enter simple walk")
+            println(" entering simple walk")
             println()
         end
         l=[]
@@ -98,7 +98,7 @@ module GraphTheory
             end
             while initPos!=newPos && ~in(newPos,l)
                 pos=newPos
-                sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
+                sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
                 if ~isempty(sameNeigs)
                     push!(l,pos)
                     newPos=rand(sameNeigs)
@@ -125,14 +125,14 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit simple walk")
+            println(" leaving simple walk")
             println()
         end
     end
     function WalkComplicatedPath(latt,pos,neigLatt;printLog=false) 
         if printLog
             println()
-            println("enter complicated walk")
+            println(" entering complicated walk")
             println()
         end
         l=WalkSimplePath(latt,pos,neigLatt;printLog=printLog)
@@ -155,7 +155,19 @@ module GraphTheory
                 append!(b,x)
                 nm[p]=[]
             end
-            #exception for single points between cycles
+            #=
+            Exception for single points between cycles
+            
+                Example (4,3) in
+            [
+                0 0 0 0 0 ;
+                0 1 1 1 0 ;
+                0 1 0 1 0 ;
+                0 1 1 1 0 ; 
+                0 1 0 1 0 ;
+                0 1 1 1 0 ;
+            ]
+            =#
             if length(Set(b))==1 && length(b)>1
                 p=b[1]
                 push!(nm[p],p)
@@ -180,7 +192,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit complicated walk")
+            println(" leaving complicated walk")
             println()
         end
     end
@@ -210,7 +222,7 @@ module GraphTheory
     function SearchCycles(latt,neigLatt;printLog=false)
         if printLog
             println()
-            println("enter cycle search")
+            println(" entering cycle search")
             println()
         end
         m=copy(latt)
@@ -256,7 +268,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("exit cycle search")
+            println(" leaving cycle search")
             println()
         end
         return (Set(fin),x[2])
@@ -275,7 +287,7 @@ module GraphTheory
     println("c")
     println(c)
     for i in 1:200
-        @time b=Cycles(a,neigLatt,printLog=false)
+        @time b=Cycles(a,neigLatt,printLog=true)
         if c!=b
             println(b)
             println("fail")

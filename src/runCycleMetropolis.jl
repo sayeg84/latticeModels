@@ -52,11 +52,12 @@ parsedArgs["Cconst"]]
 
 println("Simulating")
 println()
+println(typeof(N))
 
 mag=zeros(length(t))
 ener=zeros(length(t))
 cv=zeros(length(t))
-init=rand([1,-1],param[1],param[1])
+init=rand(Array{Int8}([1,-1]),param[1],param[1])
 for j in 0:(length(t)-1)
     temp=t[end-j]
     temp1=[]
