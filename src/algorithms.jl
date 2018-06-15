@@ -11,7 +11,11 @@ module Algorithms
         push!(matArr,copy(mat))
         for i in 1:(param[4]+1)
             pos=Auxiliar.RandomPosition(mat)
-            res=StatEnsemble.ProbCanonical(mat,pos,param,enerFunc,neigLatt,temp)
+            res=0.0
+            try res=StatEnsemble.ProbCanonical(mat,pos,param,enerFunc,neigLatt,temp)
+            catch LoadError 
+                res=1
+            end
             t=rand()
             if printLog
                 print("iter = ")

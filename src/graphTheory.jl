@@ -4,6 +4,7 @@ module GraphTheory
     function WalkTail(latt,pos,neigLatt;printLog=false)
         l=[pos]
         nm=deepcopy(neigLatt)
+        #println(neigLatt)
         sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
         newPos=sameNeigs[1]
         #self loop exception
@@ -13,20 +14,38 @@ module GraphTheory
         push!(l,newPos)
         #deleting old links
         index=Auxiliar.Index(nm[pos],newPos)
-        deleteat!(nm[pos],index)
+        try deleteat!(nm[pos],index)
+        catch LoadError
+            println("JE1")
+        end
         index=Auxiliar.Index(nm[newPos],pos)
-        deleteat!(nm[newPos],index)
-        newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos]]
+        try deleteat!(nm[newPos],index)
+        catch LoadError
+            println("JE2")
+        end
+        newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos] && in(newPos,nm[x])]
         while ~(isempty(newNeigs) || length(newNeigs)>=2)
             pos=newPos
             sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
-            newPos=sameNeigs[1]
+            try newPos=sameNeigs[1]
+            catch LoadError
+                println("JE3")
+                break
+            end
             push!(l,newPos)
             index=Auxiliar.Index(nm[pos],newPos)
-            deleteat!(nm[pos],index)
+            try deleteat!(nm[pos],index)
+            catch LoadError
+                println("JE4")
+                break
+            end
             index=Auxiliar.Index(nm[newPos],pos)
-            deleteat!(nm[newPos],index)
-            newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos]]
+            try deleteat!(nm[newPos],index)
+            catch LoadError
+                println("JE5")
+                break
+            end
+            newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos] && in(newPos,nm[x])]
         end
         if length(l)>=2
             deleteat!(l,length(l))
@@ -37,7 +56,7 @@ module GraphTheory
         if (latt[pos]==-1 || latt[pos] == 0 || latt[pos] == 2 )
             return []
         end
-        sameNeigs=[x for x in neigLatt[pos] if latt[x]==latt[pos]]
+        sameNeigs=[x for x in neigLatt[pos] if latt[x]==latt[pos] && in(pos,neigLatt[x])]
         #special case of single tail
         if isempty(sameNeigs)
             return [pos]
@@ -76,7 +95,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("entering simple walk")
+            println(" entering simple walk")
             println()
         end
         l=[]
@@ -98,7 +117,7 @@ module GraphTheory
             end
             while initPos!=newPos && ~in(newPos,l)
                 pos=newPos
-                sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos]]
+                sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
                 if ~isempty(sameNeigs)
                     push!(l,pos)
                     newPos=rand(sameNeigs)
@@ -125,14 +144,14 @@ module GraphTheory
         end
         if printLog
             println()
-            println("leaving simple walk")
+            println(" leaving simple walk")
             println()
         end
     end
     function WalkComplicatedPath(latt,pos,neigLatt;printLog=false) 
         if printLog
             println()
-            println("entering complicated walk")
+            println(" entering complicated walk")
             println()
         end
         l=WalkSimplePath(latt,pos,neigLatt;printLog=printLog)
@@ -155,7 +174,19 @@ module GraphTheory
                 append!(b,x)
                 nm[p]=[]
             end
-            #exception for single points between cycles
+            #=
+            Exception for single points between cycles
+            
+                Example (4,3) in
+            [
+                0 0 0 0 0 ;
+                0 1 1 1 0 ;
+                0 1 0 1 0 ;
+                0 1 1 1 0 ; 
+                0 1 0 1 0 ;
+                0 1 1 1 0 ;
+            ]
+            =#
             if length(Set(b))==1 && length(b)>1
                 p=b[1]
                 push!(nm[p],p)
@@ -180,7 +211,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("leaving complicated walk")
+            println(" leaving complicated walk")
             println()
         end
     end
@@ -201,7 +232,6 @@ module GraphTheory
         end
         return m
     end
-
     function RemoveDuplicates!(neigLatt)
         for pos in CartesianRange(size(neigLatt))
             neigLatt[pos]=[a for a in Set(neigLatt[pos])]
@@ -211,7 +241,7 @@ module GraphTheory
     function SearchCycles(latt,neigLatt;printLog=false)
         if printLog
             println()
-            println("entering cycle search")
+            println(" entering cycle search")
             println()
         end
         m=copy(latt)
@@ -233,7 +263,6 @@ module GraphTheory
                 x=WalkComplicatedPath(m,pos,nm,printLog=printLog)
                 l=x[1]
                 nm=x[2]
-                RemoveDuplicates!(nm)
                 RemoveElements!(m,l)
                 m3=deepcopy(m)
                 m=RemoveTails(m,nm)
@@ -257,7 +286,7 @@ module GraphTheory
         end
         if printLog
             println()
-            println("leaving cycle search")
+            println(" leaving cycle search")
             println()
         end
         return (Set(fin),x[2])
@@ -267,5 +296,50 @@ module GraphTheory
         d=RemoveTails(RemoveOthers(deepcopy(latt),-1),neigLatt)
         l=SearchCycles(d,neigLatt;printLog=printLog)
         return l[1]
+    end
+    function ShowCycles(a,c::Set)
+        m=zeros(Int8,size(a))
+        for pos in c 
+            m[pos]=1
+        end
+        return m
+    end
+    function PrintMatrixByLine(m)
+        for i in 1:(size(m)[1])
+            print("[$i,:] = ")
+            println(m[i,:])
+        end
+    end
+    function PrintIndexSet(s::Set)
+        println("begin set")
+        for pos in s 
+            print("(")
+            print(s[1])
+            print(",")
+            print(s[2])
+            println(")")
+        end
+        println("end set")
+    end
+    a=[
+        0 0 0 0 0;
+        0 0 1 1 1;
+        0 0 1 1 1;
+        0 0 0 1 0;
+        0 1 1 1 1;
+        0 1 1 1 1;
+        0 1 1 1 1;
+    ]
+    neigLatt=Auxiliar.NeighborIndexLattice(a,Auxiliar.SquareLatticeNeighborsIndex)
+    #println(WalkSimplePath(a,CartesianIndex(4,3)),neigLatt))
+    b=Cycles(a,neigLatt,printLog=false)
+    PrintMatrixByLine(ShowCycles(a,b))
+    #PrintMatrixByLine(RemoveTails(RemoveOthers#deepcopy(a),0),neigLatt))
+    for i in 1:200
+        @time c=Cycles(a,neigLatt,printLog=false)
+        if c!=b
+            PrintMatrixByLine(ShowCycles(a,c))
+            println("fail")
+        end
     end
 end
