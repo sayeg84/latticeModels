@@ -1,9 +1,10 @@
-time=Dates.time()
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
-using Algorithms,InOut,StatEnsemble,ArgParse
-
+include("auxiliar.jl")
+#using Algorithms,InOut,StatEnsemble,ArgParse
+using ArgParse, Statistics, Dates
+time=Dates.time()
 function ParseCommandline()
     s = ArgParseSettings()
 
@@ -33,7 +34,7 @@ parsedArgs = ParseCommandline()
 
 println("Begining")
 println()
-t=linspace(0.1,5,50)
+t=range(0.1,stop=5,length=50)
 N=parsedArgs["Nlatt"]
 param=[N,
 # coupling constant J
@@ -68,19 +69,19 @@ for j in 0:(length(t)-1)
         X=Algorithms.Metropolis(temp,param,StatEnsemble.PenalizedEnergy,init,neigLatt)
         initial=convert(Int64,floor(length(X)*3/4))
         M=[abs(sum(X[k])) for k in initial:length(X)]
-        push!(temp1,mean(M))
+        push!(temp1,Statistics.mean(M))
         en=[StatEnsemble.Energy(x,param,neigLatt) for x in X]
         temp4=[en[k] for k in initial:length(X)]
-        push!(temp2,mean(temp4))
-        push!(temp3,mean([x^2 for x in temp4]))
+        push!(temp2,Statistics.mean(temp4))
+        push!(temp3,Statistics.mean([x^2 for x in temp4]))
         print(t[end-j])
         print("-")
         println(i)
     end
     init=copy(X[end])
-    mag[end-j]=mean(temp1)
-    ener[end-j]=mean(temp2)
-    cv[end-j]=mean(temp3)
+    mag[end-j]=Statistics.mean(temp1)
+    ener[end-j]=Statistics.mean(temp2)
+    cv[end-j]=Statistics.mean(temp3)
 end
 cv=[(cv[i]-ener[i]^2)/(t[i]^2) for i in 1:length(t)]
 #normalizating energy

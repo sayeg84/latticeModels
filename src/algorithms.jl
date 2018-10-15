@@ -1,7 +1,8 @@
-include("statEnsemble.jl")
-include("auxiliar.jl")
+
 module Algorithms
-    using StatEnsemble, Auxiliar
+    include("statEnsemble.jl")
+    include("auxiliar.jl")
+    using Statistics
     #=
     Metropolis algorithm implementation
     =#
@@ -46,7 +47,7 @@ module Algorithms
     function isFlat(hist;per=0.5)
         min=minimum(hist)
         max=maximum(hist)
-        avg=mean(hist)
+        avg=Statistics.mean(hist)
         if min >= avg*per
             return true
         else
@@ -66,7 +67,7 @@ module Algorithms
         mag=zeros(param[6])
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,2,param[6]+1))
+        energyIntervals=collect(range(-2,stop=2,length=Int64(param[6]+1)))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -102,7 +103,7 @@ module Algorithms
                 println("rand")
                 println(tes)
                 println("avg")
-                println(mean(hist))
+                println(Statistics.mean(hist))
                 println("min")
                 println(minimum(hist))
             end
@@ -149,7 +150,7 @@ module Algorithms
         mag=zeros(param[6])
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,0,param[6]+1))
+        energyIntervals=collect(range(-2,stop=0,length=Int64(param[6]+1)))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -185,7 +186,7 @@ module Algorithms
                 println("rand")
                 println(tes)
                 println("avg")
-                println(mean(hist))
+                println(Statistics.mean(hist))
                 println("min")
                 println(minimum(hist))
             end
@@ -241,7 +242,7 @@ module Algorithms
         mag=zeros(param[6])
         hist=zeros(param[6])
         s=zeros(param[6])
-        energyIntervals=collect(linspace(-2,2+param[7]/2,param[6]+1))
+        energyIntervals=collect(range(-2,stop=2,length=Int64(param[6]+1)))
         modfact=1
         latt=copy(initLatt)
         n=0
@@ -301,7 +302,7 @@ module Algorithms
                 println("rand")
                 println(tes)
                 println("avg")
-                println(mean(hist))
+                println(Statistics.mean(hist))
                 println("min")
                 println(minimum(hist))
             end
@@ -342,4 +343,5 @@ module Algorithms
         mag=mag*(param[1]^2)
         return (energyIntervals,s,mag,last,n)
     end
+
 end

@@ -1,7 +1,8 @@
 module InOut
 export MakeDirectories, MakePlots, MakeTable
-    using Plots, Rsvg
-    plotlyjs()
+    using Plots, Rsvg, Dates
+    gr()
+
     dest=Dates.format(Dates.now(),"dd-mm-Y HH:MM:SS")
     function MakeDirectories()
         cd("..")
@@ -62,7 +63,7 @@ export MakeDirectories, MakePlots, MakeTable
         cd("..")
         cd("outputs")
         cd(dest)
-        write("datos.csv")
+        #write("datos.csv")
         open("datos.csv","w") do f 
             write(f,"Modelo de ising,Fecha, $(dest) \n")
             write(f," ,Tiempo de ejecución, $(round(time,2)) \n")
@@ -84,7 +85,7 @@ export MakeDirectories, MakePlots, MakeTable
         cd("..")
         cd("outputs")
         cd(dest)
-        write("DOS.csv")
+        #write("DOS.csv")
         open("DOS.csv","w") do f 
             write(f,"Densidad de estados")
             write(f," ,Tiempo de ejecución, $(round(time,2)) \n")

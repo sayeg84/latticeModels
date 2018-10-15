@@ -1,15 +1,14 @@
-include("auxiliar.jl")
-include("graphTheory.jl")
 module StatEnsemble
-    using Auxiliar,GraphTheory
-
+    #using Auxiliar,GraphTheory
+    include("auxiliar.jl")
+    include("graphTheory.jl")
     function Energy(latt,param,neigLatt;printLog=false)
         e=0
         s=size(latt)
         dim=length(s)
         B=param[3]
         J=param[2]
-        for pos in CartesianRange(size(latt))
+        for pos in CartesianIndices(size(latt))
             e=e-B*latt[pos]-J*latt[pos]*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2
         end
         return e
@@ -21,7 +20,7 @@ module StatEnsemble
         dim=length(s)
         B=param[3]
         J=param[2]
-        for pos in CartesianRange(size(latt))
+        for pos in CartesianIndices(size(latt))
             e=e-(B+J*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]
         end
         cycles=GraphTheory.Cycles(latt,neigLatt,printLog=printLog)

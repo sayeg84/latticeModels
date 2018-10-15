@@ -1,5 +1,5 @@
 module Auxiliar
-    
+    using Statistics
     function Modl(a::Int64,b::Int64)
         x=mod(a,b)
         if x==0
@@ -15,12 +15,16 @@ module Auxiliar
     end
     function MeanMod(x)
         if length(x)>0
-            return mean(x)
+            return Statistics.mean(x)
         else
-            return 0
+            return 0.0
         end
     end
 
+
+
+    ########################################################################
+    #legacy functions. Not used anymore
     function SetValue!(mat,pos,val)
         dim=length(size(mat))
         if dim!=length(pos)
@@ -38,7 +42,6 @@ module Auxiliar
         end
 
     end
-
     function GetValue(mat,pos)
         dim=length(size(mat))
         if dim!=length(pos)
@@ -53,12 +56,6 @@ module Auxiliar
             error("Dimension not supported")
         end
     end
-
-    function ChangeSpin(latt,pos)
-        m=copy(latt)
-        m[pos]=-1*m[pos]
-        return m
-    end
     function ChangeSpin!(latt,pos)
         dim=length(size(latt))
         if dim==1
@@ -69,6 +66,16 @@ module Auxiliar
             latt[pos[1],pos[2],pos[3]]=-1*latt[pos[1],pos[2],pos[3]]
         end
     end
+
+    ########################################################################
+
+
+    function ChangeSpin(latt,pos)
+        m=copy(latt)
+        m[pos]=-1*m[pos]
+        return m
+    end
+
     function RandomPosition(latt)
         s=size(latt)
         dim=length(s)
@@ -210,7 +217,7 @@ module Auxiliar
     function NeighborIndexLattice(latt,func;printLog=false)
         s=size(latt)
         fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(s)
-        for pos in CartesianRange(s)
+        for pos in CartesianIndices(s)
             fin[pos]=func(latt,pos)
         end
         return fin

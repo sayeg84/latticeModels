@@ -1,6 +1,6 @@
-include("auxiliar.jl")
 module GraphTheory
-    using Auxiliar
+    #using Auxiliar
+    include("auxiliar.jl")
     function WalkTail(latt,pos,neigLatt;printLog=false)
         l=[pos]
         nm=deepcopy(neigLatt)
@@ -16,12 +16,12 @@ module GraphTheory
         index=Auxiliar.Index(nm[pos],newPos)
         try deleteat!(nm[pos],index)
         catch LoadError
-            println("JE1")
+            #println("JE1")
         end
         index=Auxiliar.Index(nm[newPos],pos)
         try deleteat!(nm[newPos],index)
         catch LoadError
-            println("JE2")
+            #println("JE2")
         end
         newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos] && in(newPos,nm[x])]
         while ~(isempty(newNeigs) || length(newNeigs)>=2)
@@ -29,20 +29,20 @@ module GraphTheory
             sameNeigs=[x for x in nm[pos] if latt[x]==latt[pos] && in(pos,nm[x])]
             try newPos=sameNeigs[1]
             catch LoadError
-                println("JE3")
+                #println("JE3")
                 break
             end
             push!(l,newPos)
             index=Auxiliar.Index(nm[pos],newPos)
             try deleteat!(nm[pos],index)
             catch LoadError
-                println("JE4")
+                #println("JE4")
                 break
             end
             index=Auxiliar.Index(nm[newPos],pos)
             try deleteat!(nm[newPos],index)
             catch LoadError
-                println("JE5")
+                #println("JE5")
                 break
             end
             newNeigs=[x for x in nm[newPos] if latt[x]==latt[newPos] && in(newPos,nm[x])]
@@ -225,7 +225,7 @@ module GraphTheory
 
     function RemoveOthers(latt,oth;printLog=false)
         m=deepcopy(latt)
-        for pos in CartesianRange(size(latt))
+        for pos in CartesianIndices(size(latt))
             if m[pos]==oth 
                 m[pos]=2
             end
@@ -233,7 +233,7 @@ module GraphTheory
         return m
     end
     function RemoveDuplicates!(neigLatt)
-        for pos in CartesianRange(size(neigLatt))
+        for pos in CartesianIndices(size(neigLatt))
             neigLatt[pos]=[a for a in Set(neigLatt[pos])]
         end
     end
@@ -320,26 +320,5 @@ module GraphTheory
             println(")")
         end
         println("end set")
-    end
-    a=[
-        0 0 0 0 0;
-        0 0 1 1 1;
-        0 0 1 1 1;
-        0 0 0 1 0;
-        0 1 1 1 1;
-        0 1 1 1 1;
-        0 1 1 1 1;
-    ]
-    neigLatt=Auxiliar.NeighborIndexLattice(a,Auxiliar.SquareLatticeNeighborsIndex)
-    #println(WalkSimplePath(a,CartesianIndex(4,3)),neigLatt))
-    b=Cycles(a,neigLatt,printLog=false)
-    PrintMatrixByLine(ShowCycles(a,b))
-    #PrintMatrixByLine(RemoveTails(RemoveOthers#deepcopy(a),0),neigLatt))
-    for i in 1:200
-        @time c=Cycles(a,neigLatt,printLog=false)
-        if c!=b
-            PrintMatrixByLine(ShowCycles(a,c))
-            println("fail")
-        end
     end
 end

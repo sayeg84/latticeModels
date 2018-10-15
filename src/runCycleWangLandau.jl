@@ -1,8 +1,8 @@
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
-using Algorithms,InOut,StatEnsemble, ArgParse
-
+#using Algorithms,InOut,StatEnsemble, ArgParse
+using ArgParse, Dates
 function ParseCommandline()
     s = ArgParseSettings()
 
@@ -69,7 +69,7 @@ println()
 X=Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
-tempArray=linspace(0.1,10,100)
+tempArray=range(0.1,stop=10,length=100)
 ener=[]
 cv=[]
 mag=[]
