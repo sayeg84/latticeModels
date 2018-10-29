@@ -66,7 +66,7 @@ export MakeDirectories, MakePlots, MakeTable
         #write("datos.csv")
         open("datos.csv","w") do f 
             write(f,"Modelo de ising,Fecha, $(dest) \n")
-            write(f," ,Tiempo de ejecución, $(round(time,2)) \n")
+            write(f," ,Tiempo de ejecución, $(round(time,digits=2)) \n")
             write(f," Parámetros \n")
             write(f," n, J, B, pasos, frecuencia, bins, C \n ")
             write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]), $(param[6]), $(param[7]) \n ")
