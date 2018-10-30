@@ -9,10 +9,11 @@ function PrintByLines(M)
     println()
     println()
 end
-using GraphTheory,Auxiliar
-M=Array{Int8,2}([-1 1 1 1 -1 1 -1 -1; -1 1 1 1 -1 1 -1 1; 1 1 1 1 1 1 1 -1; 1 -1 -1 1 1 -1 -1 -1; 1 -1 1 -1 1 -1 1 -1; -1 -1 1 1 -1 -1 -1 1; -1 -1 1 1 -1 -1 -1 1; 1 -1 -1 1 1 -1 1 -1])
-
+#M=Array{Int8,2}([-1 1 1 1 -1 1 -1 -1; -1 1 1 1 -1 1 -1 1; 1 1 1 1 1 1 1 -1; 1 -1 -1 1 1 -1 -1 -1; 1 -1 1 -1 1 -1 1 -1; -1 -1 1 1 -1 -1 -1 1; -1 -1 1 1 -1 -1 -1 1; 1 -1 -1 1 1 -1 1 -1])
+M=rand([0,1],10,10)
 neigLatt=Auxiliar.NeighborIndexLattice(M,Auxiliar.SquareLatticeNeighborsIndex)
+@time C=GraphTheory.Cycles(M,neigLatt)
+@time C=GraphTheory.Cycles(M,neigLatt)
 @time C=GraphTheory.Cycles(M,neigLatt)
 A=zeros(Int8,size(M))
 for pos in C 

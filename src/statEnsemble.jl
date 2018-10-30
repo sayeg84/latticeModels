@@ -2,6 +2,7 @@ module StatEnsemble
     #using Auxiliar,GraphTheory
     include("auxiliar.jl")
     include("graphTheory.jl")
+    include("cyclesAta.jl")
     function Energy(latt,param,neigLatt;printLog=false)
         e=0
         s=size(latt)
@@ -27,6 +28,24 @@ module StatEnsemble
         for pos in cycles
             e=e+param[7]*latt[pos]
         end
+        return e
+    end
+
+    function PenalizedEnergy2(latt,param,neigLatt;printLog=false)
+        e=0
+        s=size(latt)
+        dim=length(s)
+        B=param[3]
+        J=param[2]
+        for pos in CartesianIndices(size(latt))
+            e=e-(B+J*Auxiliar.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]
+        end
+        #println("hay energia penalizada")
+        cycles=CyclesAta.ciclos2(latt)
+        if sum(cycles) > 0
+            println("bien")
+        end
+        e=e+param[7]*sum(cycles)
         return e
     end
 

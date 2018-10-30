@@ -105,6 +105,7 @@ module Auxiliar
             return b
         end
     end
+    
     #square lattice neighbors sum
     function SquareLatticeNeighbors(latt,pos;printLog=false)
         s=size(latt)
