@@ -1,6 +1,7 @@
 include("inOut.jl")
 include("algorithms.jl")
 include("statEnsemble.jl")
+include("geometry.jl")
 #using Algorithms,InOut,StatEnsemble, ArgParse
 using ArgParse, Dates
 function ParseCommandline()
@@ -53,7 +54,7 @@ convert(Int32,ceil(N^2/2)-N),
 
 #making test run for compilation
 #initLatt=ones(param[1],param[1])
-#neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
+#neigLatt=Geometry.IndexLattice(initLatt,Geometry.SquareLatticeNeighbors)
 #Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)
 
 
@@ -63,7 +64,7 @@ N=parsedArgs["Nlatt"]
 param=[N,parsedArgs["Jconst"],parsedArgs["Bfield"],0,0,convert(Int32,ceil(N^2/2)-N),parsedArgs["Cconst"]]
 
 initLatt=-1*ones(Int8,param[1],param[1])
-neigLatt=Auxiliar.NeighborIndexLattice(initLatt,Auxiliar.SquareLatticeNeighborsIndex)
+neigLatt=Geometry.IndexLattice(initLatt,Geometry.SquareLatticeNeighbors)
 println("Simulating")
 println()
 X=Algorithms.WangLandauCycle(param,initLatt,neigLatt,printLog=false)

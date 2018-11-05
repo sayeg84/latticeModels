@@ -31,22 +31,6 @@ function ParseCommandline()
             help = "Lattice geometry"
             arg_type = String
             default = "square"
-        "-B", "--Bfield"
-            help = "Magnetic field"
-            arg_type = Float64
-            default = 0.0
-         "-J", "--Jconst"
-            help = "Coupling constant of Ising model"
-            arg_type = Float64
-            default = 1.0
-        "-C", "--Cconst"
-            help = "Cycle constant"
-            arg_type = Float64
-            default = 1.0
-        "-T", "--temp"
-            help = "Temperature"
-            arg_type = Float64
-            default = 5.0
         "-S", "--steps"
             help = "logarithm base 10 of total steps"
             arg_type = Float64
@@ -65,21 +49,15 @@ end
 
 parsedArgs = ParseCommandline()
 
-algoParam=Array{Int64,1}([
-    floor(10^parsedArgs["steps"]),
-    floor(10^parsedArgs["frequency"]),
-    parsedArgs["averages"]
-])
 
-simulParam=Array{Float64,1}([
-    parsedArgs["Bfield"],
-    parsedArgs["Jconst"],
-    parsedArgs["Cconst"],
-    parsedArgs["temp"]
+algoParam=Array{Int64,1}([
+    10000,
+    100,
+    10
 ])
 
 geoParam=[
-    parsedArgs["Nlatt"],
+    10,
     parsedArgs["dim"],
     parsedArgs["Geometry"]
 ]
@@ -88,34 +66,45 @@ println()
 println("Initializing Lattice")
 println()
 # Initializing first lattice
+model="Cycle"
+latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
+#initializing parameters
+bArray=range(-3,stop=-2,length=21)
+#bArray=[-3.0]
+jArray=[2.0]
+cArray=[0.8]
+tArray=[0.5]
 
-latt , neigLatt =  Geometry.BuildLattices(geoParam,"cycle")
 
 println()
-println("Making simulation")
+println("Running simulations")
 println()
-# making simulation
-resul=[]
-for i in 1:algoParam[3]
-    X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"cycle")
-    push!(resul,X)
-    latt=copy(X[end])
+
+params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
+
+
+for simulParam in params
+    current="B, J, C, T = $(simulParam) "
+    println()
+    println(current)
+    println()
+
+    resul=[]
+    for i in 1:algoParam[3]
+        println(i)
+        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,model)
+        push!(resul,X)
+        latt=deepcopy(X[end])
+    end
+
+    InOut.MakeAndEnterDirectories()
+    mkdir(string(simulParam))
+    cd(string(simulParam))
+    InOut.MetropolisOut(mean(resul),algoParam)
+    InOut.WriteAlgoParamTable(algoParam,"metropolis")
+    InOut.WriteSimulParamTable(simulParam)
+    InOut.WriteGeoParamTable(geoParam)
+    cd("..")
+    InOut.ExitDirectories()
 end
-
-println()
-println("Writing output")
-println()
-
-InOut.MakeAndEnterDirectories()
-name="Single"
-mkdir(name)
-cd(name)
-InOut.MetropolisOut(mean(resul),algoParam)
-InOut.WriteAlgoParamTable(algoParam,"metropolis")
-InOut.WriteSimulParamTable(simulParam)
-InOut.WriteGeoParamTable(geoParam)
-cd("..")
-InOut.ExitDirectories()
-
-
-
+    

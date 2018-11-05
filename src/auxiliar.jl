@@ -1,18 +1,37 @@
 module Auxiliar
     using Statistics
+
+    """
+        Modl(a,b)
+
+        Function equivalent to the traditional modulo n ( % n , mod(x,n)) operator but returning values between 1 and n.
+    """
     function Modl(a::Int64,b::Int64)
         x=mod(a,b)
-        if x==0
+        if x==0 
             return b
         else
             return x
         end
     end
+
+    """
+        MirrorList!(l)
+
+        Liven a list [a_1,...a_n] it "mirrors" it converting it in [a_1,...,a_n,a_n,a_{n-1},...,a_1]  
+
+    """
     function MirrorList!(l;printLog=false)
         n=length(l)
         aux=[l[i] for i in n:-1:1]
         append!(l,aux)
     end
+
+    """
+        MeanMod(x)
+
+        Modified mean function that returns 0 for empty lists
+    """
     function MeanMod(x)
         if length(x)>0
             return Statistics.mean(x)
@@ -69,13 +88,26 @@ module Auxiliar
 
     ########################################################################
 
+    """
+        ChangeSpin(lattPos)
 
-    function ChangeSpin(latt,pos)
+        Wrapper that changes the spin in that given position. It can alter between the normal ising model and our modified version
+    """
+    function ChangeSpin(latt,pos;normal=true)
         m=copy(latt)
-        m[pos]=-1*m[pos]
+        if normal
+            m[pos]=-1*m[pos]
+        else
+            if m[pos]==0
+                m[pos]=1
+            else
+                m[pos]=0
+            end
+        end
         return m
     end
-
+    #############################################################################################
+    #=Legacy function
     function RandomPosition(latt)
         s=size(latt)
         dim=length(s)
@@ -88,8 +120,23 @@ module Auxiliar
         else
             error("Dimension not supported")
         end
-    
     end
+    =#
+
+    """
+        RandomPosition(latt)
+
+        Wrapper for returning a CartesianIndex corresponding to a position in the n-dimensional array latt
+    """
+    function RandomPosition(latt)
+        return rand(CartesianIndices(size(latt)))
+    end
+
+    """
+        SearchSortedMod(x,a)
+
+        Modified version of searchsortedlast to perform binary search in array x in search of largest index i such that x[i] < a and returning n-1 when  a > x[end]
+    """
     function SearchSortedMod(x,a;printLog=false)
         b=searchsortedlast(x,a)
         if printLog
@@ -106,130 +153,10 @@ module Auxiliar
         end
     end
     
-    #square lattice neighbors sum
-    function SquareLatticeNeighbors(latt,pos;printLog=false)
-        s=size(latt)
-        dim=length(s)
-        if dim==1
-            v1=latt[Modl(pos[1]-1,s[1])]
-            v2=latt[Modl(pos[1]+1,s[1])]
-            if printLog
-                println([v1 0 v2])
-            end
-            return v1+v2
-        elseif dim==2
-            v1 = latt[Modl(pos[1]-1,s[1]), pos[2]]
-            v2 = latt[Modl(pos[1]+1,s[1]), pos[2]]
-            v3 = latt[pos[1],Modl(pos[2]-1,s[2])]
-            v4 = latt[pos[1],Modl(pos[2]+1,s[2])]
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-            end
-            return v1+v2+v3+v4
-        elseif dim==3
-            v1 = latt[Modl(pos[1]-1,s[1]), pos[2], pos[3]]
-            v2 = latt[Modl(pos[1]+1,s[1]), pos[2], pos[3]]
-            v3 = latt[pos[1], Modl(pos[2]-1,s[2]), pos[3]]
-            v4 = latt[pos[1], Modl(pos[2]+1,s[2]), pos[3]]
-            v5 = latt[pos[1], pos[2], Modl(pos[3]-1,s[3])]
-            v6 = latt[pos[1], pos[2], Modl(pos[3]+1,s[3])]
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-                println([v5 0 v6])
-            end
-            return v1+v2+v3+v4+v5+v6
-        else
-            error("dimension not soported")
-        end
-    end
-
-    function SquareLatticeNeighborsArray(latt,pos;printLog=false)
-        s=size(latt)
-        dim=length(s)
-        if dim==1
-            v1=latt[Modl(pos[1]-1,s[1])]
-            v2=latt[Modl(pos[1]+1,s[1])]
-            if printLog
-                println([v1 0 v2])
-            end
-            return [v1,v2]
-        elseif dim==2
-            v1 = latt[Modl(pos[1]-1,s[1]), pos[2]]
-            v2 = latt[Modl(pos[1]+1,s[1]), pos[2]]
-            v3 = latt[pos[1],Modl(pos[2]-1,s[2])]
-            v4 = latt[pos[1],Modl(pos[2]+1,s[2])]
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-            end
-            return [v1,v2,v3,v4]
-        elseif dim==3
-            v1 = latt[Modl(pos[1]-1,s[1]), pos[2], pos[3]]
-            v2 = latt[Modl(pos[1]+1,s[1]), pos[2], pos[3]]
-            v3 = latt[pos[1], Modl(pos[2]-1,s[2]), pos[3]]
-            v4 = latt[pos[1], Modl(pos[2]+1,s[2]), pos[3]]
-            v5 = latt[pos[1], pos[2], Modl(pos[3]-1,s[3])]
-            v6 = latt[pos[1], pos[2], Modl(pos[3]+1,s[3])]
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-                println([v5 0 v6])
-            end
-            return [v1,v2,v3,v4,v5,v6]
-        else
-            error("dimension not soported")
-        end
-    end
-
-    function SquareLatticeNeighborsIndex(latt,pos;printLog=false)
-        s=size(latt)
-        dim=length(s)
-        if dim==1
-            v1=CartesianIndex(Modl(pos[1]-1,s[1]))
-            v2=CartesianIndex(Modl(pos[1]+1,s[1]))
-            if printLog
-                println([v1 0 v2])
-            end
-            return [v1,v2]
-        elseif dim==2
-            v1 = CartesianIndex(Modl(pos[1]-1,s[1]), pos[2])
-            v2 = CartesianIndex(Modl(pos[1]+1,s[1]), pos[2])
-            v3 = CartesianIndex(pos[1],Modl(pos[2]-1,s[2]))
-            v4 = CartesianIndex(pos[1],Modl(pos[2]+1,s[2]))
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-            end
-            return [v1,v2,v3,v4]
-        elseif dim==3
-            v1 = CartesianIndex(Modl(pos[1]-1,s[1]), pos[2], pos[3])
-            v2 = CartesianIndex(Modl(pos[1]+1,s[1]), pos[2], pos[3])
-            v3 = CartesianIndex(pos[1], Modl(pos[2]-1,s[2]), pos[3])
-            v4 = CartesianIndex(pos[1], Modl(pos[2]+1,s[2]), pos[3])
-            v5 = CartesianIndex(pos[1], pos[2], Modl(pos[3]-1,s[3]))
-            v6 = CartesianIndex(pos[1], pos[2], Modl(pos[3]+1,s[3]))
-            if printLog
-                println([0 v1 0; v3 0 v4 ; 0 v2 0])
-                println([v5 0 v6])
-            end
-            return [v1,v2,v3,v4,v5,v6]
-        else
-            error("dimension not soported")
-        end
-    end
-
-    function NeighborIndexLattice(latt,func;printLog=false)
-        s=size(latt)
-        fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(s)
-        for pos in CartesianIndices(s)
-            fin[pos]=func(latt,pos)
-        end
-        return fin
-    end
-    function NeighborSum(latt,neigLatt,pos)
-        neigVal=0
-        for neigPos in neigLatt[pos]
-            neigVal=neigVal+latt[neigPos]
-        end
-        return neigVal
-    end
+    """
+        Index(x,a)
+        function that searches for the index of item a in array x. Returns -1 if a is not in x
+    """
     function Index(array,element)
         b=find(x -> x==element,array)
         if ~isempty(b)
@@ -238,5 +165,4 @@ module Auxiliar
             return -1
         end
     end
-    
 end

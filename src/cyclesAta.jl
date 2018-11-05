@@ -317,7 +317,7 @@ module CyclesAta
         vec=ciclos(a,b,n,n)[2]
         return matrizar(vec,n,n)
     end
-    """
+    #=
     #gr()
     n= 10
     vecino = vecinos2(n,n)
@@ -326,5 +326,5 @@ module CyclesAta
     @time σo,σc, σn = ciclos(σ,vecino,n,n)
     @time σo,σc, σn = ciclos(σ,vecino,n,n)
     @time σo,σc, σn = ciclos(σ,vecino,n,n)
-    """
+    =#
 end
