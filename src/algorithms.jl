@@ -15,13 +15,13 @@ module Algorithms
             enerFunc=StatEnsemble.NormalEnergy
             nrml=true
         else
-            enerFunc=StatEnsemble.PenalizedEnergy2
+            enerFunc=StatEnsemble.PenalizedEnergy3
             nrml=false
         end
         matArr=[]
         mat=initLatt
         push!(matArr,copy(mat))
-        for i in 0:(algoParam[1])
+        for i in 1:(algoParam[1])
             pos=Auxiliar.RandomPosition(mat)
             res=0.0
             try res=StatEnsemble.Prob(mat,neigLatt,pos,simulParam,enerFunc,nrml)
@@ -47,6 +47,7 @@ module Algorithms
                 mat=Auxiliar.ChangeSpin(mat,pos,normal=nrml)
             end
             if mod(i,algoParam[2])==0
+                println(i)
                 push!(matArr,copy(mat))
             end
         end

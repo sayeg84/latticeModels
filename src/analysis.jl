@@ -9,9 +9,12 @@ println()
 include("statEnsemble.jl")
 include("auxiliar.jl")
 include("inOut.jl")
+include("geometry.jl")
 
 using Plots, Rsvg, DelimitedFiles, ArgParse, Statistics
 gr()
+
+original=pwd()
 
 println()
 println("Parsing arguments")
@@ -30,7 +33,7 @@ function ParseCommandline()
 end
 parsedArgs = ParseCommandline()
 
-dic=InOut.MetropolisIn(parsedArgs["Dirname"])
+
 
 function MacroscopicVariables(dic,model,geoParam;cut=1/2)
     indexes=[]
@@ -51,14 +54,65 @@ function MacroscopicVariables(dic,model,geoParam;cut=1/2)
     return (indexes,M,E,CV,Xi)
 end
 
-function PlotMag(vals)
+function ThermalizationAnalysis(X,model,geoParam,simulParam,algoParam)
     
+    if model=="normal"
+        enerFunc=StatEnsemble.NormalEnergy
+        n1="Magnetizacion"
+        n2="Energia"
+    else
+        enerFunc=StatEnsemble.PenalizedEnergy2
+        n1="Densidad"
+        n2="Energia"
+    end
+    neigLatt=Geometry.BuildLattices(geoParam,model)[2]
+
+    steps=[(i-1)*(algoParam[2]) for i in 1:length(X)]
+    mag=[abs(sum(x)) for x in X]
+    en=[enerFunc(x,neigLatt,simulParam) for x in X]
+
+    #making first plot
+    scatter(
+        steps,mag,xlabel="Pasos de Monte Carlo",ylabel=n1,title="Termalizacion"
+    )
+    plot!(
+        steps,mag
+    )
+
+    Plots.savefig("Termalization1.png")
+    #making second plot
+    scatter(
+        steps,en,xlabel="Pasos de Monte Carlo",ylabel=n2,title="Termalizacion"
+    )
+    plot!(
+        steps,en
+    )
+    Plots.savefig("Termalization2.png")
 end
 
+function PlotMag(vals)
+    M=[]
+    for element in vals[1]
+    end
+end
+
+a=InOut.MetropolisIn(parsedArgs["Dirname"])
+#=
+cd(parsedArgs["Dirname"])
+for iter in a
+    cd(iter[1])
+    simulParam=InOut.ParseArray(iter[1])
+    geoParam=InOut.ReadGeoParamTable()
+    algoParam=InOut.ReadAlgoParamTable()
+    ThermalizationAnalysis(iter[2],"cycle",geoParam,simulParam,algoParam)
+    cd("..")
+end
+cd(original)
+=#
 mus=[]
 rhos=[]
 for iter in a 
-    simulParam=iter[1]
+    simulParam=InOut.ParseArray(iter[1])
     b=iter[2]
     ncut=Int64(length(b*3/4))
     X=[b[i] for i in ncut:length(b)]
@@ -70,22 +124,7 @@ Plots.scatter(mus,rhos,
 title="Fase Intermedia",
 xlabel="Mu",
 ylabel="Densidad",
-label="simulación con N=400)"
+label="simulación con N=100)",
+legend=:topleft
 )
-Plots.savefig("finally.png")
-
-#=
-for i in -3.0:0.05:-2.0
-    println(i)
-    indx=[i,2.0,0.8,0.5]
-    b=a[indx]
-    simulParam=indx[1]
-    dens=[sum(x) for x in b]
-    Plots.scatter(dens,title="termalizacion",ylim=(180,220),xlabel="pasos",ylabel="densidad")
-    Plots.plot!(dens)
-    Plots.savefig("termalizacion$(Int64(round(i*100))).png")
-end
-#=
-using InteractiveUtils
-println(varinfo(r"a"))
-=#
+Plots.savefig(joinpath(parsedArgs["Dirname"],"intermediate.png"))

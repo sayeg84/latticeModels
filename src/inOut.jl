@@ -93,7 +93,7 @@ module InOut
             matrices=[]
             cd(folder)
             cd("matrices")
-            simulParam=ParseArray(folder)
+            simulParam=folder
             #getting list of files
             matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
             for j in matricesPaths
@@ -104,9 +104,10 @@ module InOut
             cd("..")
             cd("..")
         end
-        #saving the steps simulation as the last one 
-        return(Dict(zip(simulParamArray,matricesArray)))
         cd(original)
+        #saving the steps simulation as the last one 
+        return Dict(zip(simulParamArray,matricesArray))
+        
     end
 
 
@@ -143,6 +144,25 @@ module InOut
         end
     end
 
+    function ReadSimulParamTable()
+        x=DelimitedFiles.readdlm("simulationParameters.csv")
+        x=Array{Float64,1}(x[:,end])
+        return x
+    end
+
+    function ReadGeoParamTable()
+        x=DelimitedFiles.readdlm("geometryParameters.csv")
+        x=Array(x[:,end])
+        return x
+    end
+
+    function ReadAlgoParamTable()
+        x=DelimitedFiles.readdlm("algorithmParameters.csv")
+        x=Array(x[:,end])
+        return x
+    end
+
+
     function MakeParamsTable(param,temp,geo)
         cd("..")
         cd("outputs")
@@ -161,6 +181,7 @@ module InOut
         cd("..")
         cd("src")
     end
+
     function MakePlots(t,a1,a2,a3,param)
         cd("..")
         cd("outputs")

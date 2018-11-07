@@ -1,4 +1,4 @@
-println("Metropolis ising model")
+println("Ising model")
 println()
 println()
 println("Importing libraries")
@@ -10,7 +10,9 @@ include("statEnsemble.jl")
 include("auxiliar.jl")
 include("geometry.jl")
 #using Algorithms,InOut,StatEnsemble, ArgParse
-using ArgParse, Statistics, Dates
+using ArgParse, Statistics, Dates, Distributed
+
+#Distributed.addprocs(2)
 
 println()
 println("Parsing Arguments")
@@ -69,7 +71,7 @@ println()
 model="Cycle"
 latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
 #initializing parameters
-bArray=range(-3,stop=-2,length=21)
+bArray=range(-3,stop=-1,length=21)
 #bArray=[-3.0]
 jArray=[2.0]
 cArray=[0.8]
@@ -84,19 +86,19 @@ params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for 
 
 
 for simulParam in params
+    
     current="B, J, C, T = $(simulParam) "
     println()
     println(current)
     println()
-
+    
     resul=[]
     for i in 1:algoParam[3]
         println(i)
         X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,model)
         push!(resul,X)
-        latt=deepcopy(X[end])
     end
-
+    
     InOut.MakeAndEnterDirectories()
     mkdir(string(simulParam))
     cd(string(simulParam))
@@ -106,5 +108,7 @@ for simulParam in params
     InOut.WriteGeoParamTable(geoParam)
     cd("..")
     InOut.ExitDirectories()
+    
 end
+
     

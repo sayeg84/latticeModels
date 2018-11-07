@@ -107,7 +107,7 @@ println("Writing output")
 println()
 
 InOut.MakeAndEnterDirectories()
-name="Single"
+name=string(simulParam)
 mkdir(name)
 cd(name)
 InOut.MetropolisOut(mean(resul),algoParam)
@@ -116,6 +116,4 @@ InOut.WriteSimulParamTable(simulParam)
 InOut.WriteGeoParamTable(geoParam)
 cd("..")
 InOut.ExitDirectories()
-
-
 

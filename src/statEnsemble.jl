@@ -50,14 +50,31 @@ module StatEnsemble
         e=0
         s=size(latt)
         dim=length(s)
+        cycles=CyclesAta.ciclos2(latt)
         B=simulParam[1]
         J=simulParam[2]
+        C=simulParam[3]
         for pos in CartesianIndices(size(latt))
+            #e=e-(B+J*Geometry.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]+C*Geometry.NeighborSum(cycles,neigLatt,pos)*1/2*cycles[pos]
             e=e-(B+J*Geometry.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]
         end
         #println("hay energia penalizada")
+        return e+sum(cycles)*C
+    end
+
+    function PenalizedEnergy3(latt,neigLatt,simulParam;printLog=false)
+        e=0
+        k=0
+        s=size(latt)
+        dim=length(s)
         cycles=CyclesAta.ciclos2(latt)
-        e=e+simulParam[3]*sum(cycles)
+        B=simulParam[1]
+        J=simulParam[2]
+        C=simulParam[3]
+        for pos in CartesianIndices(size(latt))
+            e=e-(B+J*Geometry.NeighborSum(latt,neigLatt,pos)*1/2)*latt[pos]+C*Geometry.NeighborSum(cycles,neigLatt,pos)*1/2*cycles[pos]
+        end
+        #println("hay energia penalizada")
         return e
     end
 
@@ -213,5 +230,18 @@ module StatEnsemble
         x=x/Partition(s,energyIntervals,temp,geoParam)
         return (x-DOSEnergy(s,energyIntervals,temp,geoParam)^2)/temp^2
     end
-
+    #=
+    a=[-2.0,2.0,0.8,0.5]
+    b,c=Geometry.BuildLattices([6,2,"square"],"cycle")
+    b=[0 0 0 0 0 0;
+    0 0 0 0 0 0;
+    0 0 0 1 1 0;
+    0 0 1 1 1 0;
+    0 0 1 1 0 0;
+    0 0 0 0 0 0;
+    ]
+    @show b 
+    @show PenalizedEnergy2(b,c,a)
+    @show PenalizedEnergy3(b,c,a)
+    =#
 end
