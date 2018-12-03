@@ -1,26 +1,18 @@
 module CyclesAta
-
-    "vectorizar(mat) convierte un arreglo n-dimensional mat en un vector de n*m"
+    include("geometry.jl")
+    include("cyclesRefactored.jl")
+    "vectorize(mat) converts an n-dimensional array mat in a vector"
     function vectorizar(mat)
-        res=[]
-        for pos in CartesianRange(size(mat))
-            push!(res,mat[pos])
-        end
-        return res
+        return reshape(copy(mat),length(mat))
     end
-    "matrizar convierte un vector de longitud n*m en una matriz de n*m"
-    function matrizar(vec,n,m)
-        if n*m != length(vec)
-            error("las dimensiones deben ser iguales")
+
+    "matrizar(vec,dimsVec) converts a vector of length prod(dimsVec) into an length(dimsVec)-array with dimensions dimsVec[1],..,dimsVec[n]"
+    function matrizar(vec,dimsVec)
+        if prod(dimsVec) != length(vec)
+            error("dimentions must match")
         end
-        res=zeros(typeof(vec[1]),n,m)
-        for i in 1:n
-            for j in 1:m
-                index= (i-1)*n +j
-                res[i,j]=vec[index]
-            end
-        end
-        return res
+        dimsVec=Tuple(dimsVec)
+        return reshape(copy(vec),dimsVec)
     end
 
     "vecinos(n,m) genera una lista de vecinos de una red cuadrada de nxm, con condiciones periódicas a la frontera"
@@ -61,12 +53,6 @@ module CyclesAta
         return ve
     end
 
-    "dibuja_sigma(σ,n,m,estilo) Dibuja un mapa de calor de σ, en un red de nxm. Estilo puede ser igual a false o :ijulia "
-    function dibuja_sigma(σ,n,m,estilo) 
-        σ =reshape(σ,n,m)
-        heatmap!(1:n,1:m,σ,aspect_ratio=:equal,  show = estilo)
-    end
-
     "vecinos_s(σ,vecino) Genera una lista de vecinos a partir de un arreglo σ y la conectividad de la red donde se encuentra σ. Ejemplo, v = vecinos_s(σ,vecino), entonces, v[i] será un arreglo que contenga todos j's tales que σ[j] = 1, y j un elemento de vecino[i]"
     function vecinos_s(σ,vecino)  
         vecino2 = Array[]
@@ -90,10 +76,8 @@ module CyclesAta
         n = n1*m
         σ2 = copy(σ)
         test = true
-        contador = 0
         σn = zeros(n)
         while test 
-            contador +=1
             test2 = 1
             for i in 1:n
                 if σ[i] != 0
@@ -117,41 +101,6 @@ module CyclesAta
         return σ, σn
     end
 
-    function quita_pelos!(σ,vecino, vecino2,n1,m)
-        n = n1*m
-        σ2 = copy(σ)
-        test = true
-        contador = 0
-        σn = zeros(n)
-        while test
-            contador +=1
-            test2 = 1
-            for i in 1:n
-                if σ[i] != 0
-                    enlaces = sum(σ[vecino[i]])
-                    enlaces2 = length(vecino2[i])
-                    if enlaces2 == 1
-                        @show enlaces, enlaces2
-                        enlaces == enlaces2
-                    end
-                    if enlaces <= 1  
-                        σ[i] = 0
-                        σn[i] = 1
-                    end
-                    test2 *=(1-enlaces)
-                    if abs(test2) >2
-                        test2 = 1
-                    end
-                end
-            end
-            if test2 == 0
-                test = true
-            else
-                test = false
-            end
-        end
-        return σ, σn
-    end
                     
     "Lista(vecino), usa un arreglo de conectividad para hacer una lista de los elementos que tienen conectividad igual a 3"
     function Lista(vecino)
@@ -201,9 +150,9 @@ module CyclesAta
         test = false  #Nos dice si hay un vecino2[i] que tenga sólo un elemento.
         k = lista2[lista3[end]]
         if length(lista3) == 1 # caso 1: El ciclo se forma sin ningún punto con conectividad mayor a 2 de pormedio
-            s = findin(vecino2[j],lista2[end])
+            s = findall((in)(lista2[end]),vecino2[j])
             deleteat!(vecino2[j],s[1])
-            s = findin(vecino2[j],lista2[2])
+            s = findall((in)(lista2[2]),vecino2[j])
             deleteat!(vecino2[j],s[1])
             if length(vecino2[j]) == 1
                 test = true
@@ -216,24 +165,24 @@ module CyclesAta
             return lista4, vecino2, test, true
         end
         if lista3[end] == length(lista2) # caso 2: El ciclo se forma con el último elemento de la lista3. 
-            s = findin(vecino2[j],lista2[end])
+            s = findall((in)(lista2[end]),vecino2[j])
             deleteat!(vecino2[j],s[1])
-            s = findin(vecino2[k],j)
+            s = findall((in)(j),vecino2[k])
             deleteat!(vecino2[k],s[1])
             if length(vecino2[j]) == 1
                 test = true
             end
-            x = findin(lista2,j)
+            x = findall((in)(j),lista2)
             for i in x[1]:length(lista2)
                 push!(lista4,lista2[i])
             end
             return lista4, vecino2, test, true
         else  # caso 3: cualquier otro caso. 
-            s = findin(vecino2[j],lista2[end])
+            s = findall((in)(lista2[end]),vecino2[j])
             deleteat!(vecino2[j],s[1])
-            s = findin(vecino2[k],lista2[lista3[end]+1])
+            s = findall((in)(lista2[lista3[end]+1]),vecino2[k])
             deleteat!(vecino2[k],s[1])
-            x = findin(lista2,j)
+            x = findall((in)(j),lista2)
             for i in lista3[end]+1:length(lista2)
                 vecino2[lista2[i]] = []
             end
@@ -277,9 +226,9 @@ module CyclesAta
     "ciclos(σ,vecino,n,m) regresa 3 arreglos, el que corresponde a los ciclos, el arreglo original y la diferencia entre los ciclos y el original"    
     function ciclos(σ,vecino,n1,m)
         σo = copy(σ)
-        σ, σn = quita_pelos!(σ,vecino,n1,m)
-        vecino2 = vecinos_s(σ,vecino)
-        lista, vecino2, test, test2 = recorrer(vecino2)
+        @time σ, σn = quita_pelos!(σ,vecino,n1,m)
+        @time vecino2 = vecinos_s(σ,vecino)
+        @time lista, vecino2, test, test2 = recorrer(vecino2)
         σ2 = zeros(Int,n1*m)   
         cont = 0
         while test2   
@@ -288,7 +237,7 @@ module CyclesAta
             if test
                 cont += 1
                 σcop = copy(σ)
-                σ, σn1 = quita_pelos!(σ,vecino, vecino2,n1,m)
+                σ, σn1 = quita_pelos!(σ,vecino,n1,m)
                 σn += σn1
                 vecino2 = vecinos_s(σ,vecino)
             end
@@ -305,26 +254,38 @@ module CyclesAta
         end
         return σo, σc, σo-σc
     end
-    function ciclosprueba()
-        println("si se puede")
-    end
     function ciclos2(latt)
         n=size(latt)[1]
         #println("hay ciclos")
-
         a=vectorizar(latt)
         b=vecinos(n,n)
         vec=ciclos(a,b,n,n)[2]
-        return matrizar(vec,n,n)
+        return matrizar(vec,(n,n))
     end
     #=
-    #gr()
-    n= 10
-    vecino = vecinos2(n,n)
-    σ = rand([0,1],n^2)
-    #quita_pelos!(σ,vecino, n,n)
-    @time σo,σc, σn = ciclos(σ,vecino,n,n)
-    @time σo,σc, σn = ciclos(σ,vecino,n,n)
-    @time σo,σc, σn = ciclos(σ,vecino,n,n)
+    function TestSimilarity(nTests=100)
+
+        c = 0
+        t1 = 0
+        t2 = 0
+        for i in 1:nTests
+            println(i)
+            latt , neigLatt =  Geometry.BuildLattices( [10,2,"square"], "cycle")
+            a,t1aux =  (@timed CyclesRefactored.Cycles(latt) )[1:2]
+            b,t2aux = (@timed ciclos2(latt) )[1:2]
+            t1 += t1aux
+            t2 += t2aux
+            if a != b
+                c += 1
+                @show a
+                @show b
+                println("fail")
+            end
+        end
+        println("Performed $(nTests) tests, $(c) failed")
+        println(t1)
+        println(t2)
+    end
+    TestSimilarity()
     =#
 end

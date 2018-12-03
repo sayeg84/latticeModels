@@ -24,10 +24,7 @@ module Algorithms
         for i in 1:(algoParam[1])
             pos=Auxiliar.RandomPosition(mat)
             res=0.0
-            try res=StatEnsemble.Prob(mat,neigLatt,pos,simulParam,enerFunc,nrml)
-            catch LoadError 
-                res=1
-            end
+            res=StatEnsemble.Prob(mat,neigLatt,pos,simulParam,enerFunc,nrml)
             t=rand()
             if printLog
                 print("iter = ")
@@ -44,10 +41,9 @@ module Algorithms
                 println()
             end
             if res>t
-                mat=Auxiliar.ChangeSpin(mat,pos,normal=nrml)
+                mat = Auxiliar.ChangeSpin(mat,pos,normal=nrml)
             end
             if mod(i,algoParam[2])==0
-                println(i)
                 push!(matArr,copy(mat))
             end
         end

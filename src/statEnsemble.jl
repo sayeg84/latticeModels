@@ -77,7 +77,6 @@ module StatEnsemble
         #println("hay energia penalizada")
         return e
     end
-
     """
         Prob(latt,neigLatt,pos,simulParam,enerFunc)
 

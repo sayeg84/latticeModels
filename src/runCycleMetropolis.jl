@@ -38,15 +38,15 @@ function ParseCommandline()
          "-J", "--Jconst"
             help = "Coupling constant of Ising model"
             arg_type = Float64
-            default = 1.0
+            default = 2.0
         "-C", "--Cconst"
             help = "Cycle constant"
             arg_type = Float64
-            default = 1.0
+            default = 0.8
         "-T", "--temp"
             help = "Temperature"
             arg_type = Float64
-            default = 5.0
+            default = 0.5
         "-S", "--steps"
             help = "logarithm base 10 of total steps"
             arg_type = Float64
@@ -97,6 +97,7 @@ println()
 # making simulation
 resul=[]
 for i in 1:algoParam[3]
+    println(i)
     X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"cycle")
     push!(resul,X)
     latt=copy(X[end])

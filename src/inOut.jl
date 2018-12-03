@@ -2,7 +2,7 @@ module InOut
     using Plots, Rsvg, Dates, DelimitedFiles
     gr()
 
-    dest=Dates.format(Dates.now(),"dd-mm-Y HH:MM:SS")
+    dest=Dates.format(Dates.now(),"dd-mm-Y HH:MM")
 
     """
         ParseArray(array::String)
