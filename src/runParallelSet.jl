@@ -66,10 +66,10 @@ geoParam=[
 ]
 
 #initializing parameters
-bArray=range(-3.0,stop=-1.0,length=21)
+#bArray=range(-3.0,stop=-1.0,length=21)
 jArray=[2.0]
 cArray=[0.8]
-#cArray=range(0.5,stop=1.5,length=21)
+cArray=range(0.5,stop=1.5,length=21)
 tArray=[0.5]
 
 println()
