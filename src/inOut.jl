@@ -110,7 +110,38 @@ module InOut
         
     end
 
+    """
+        MetropolisIn(name)
 
+        Read all the matrices of a set of simulations, along with its parameters. 
+    """
+    function MetropolisSetIn(name)
+        #getting list of directories
+        original=pwd()
+        cd(name)
+        dirs=Folders()
+        sims=Set([split(d,"_")[1] for d in dirs])
+        simulParamArray=[]
+        matricesArray=[]
+        for sim in sims
+            matrices=[]
+            cd(folder)
+            cd("matrices")
+            simulParam=folder
+            #getting list of files
+            matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
+            for j in matricesPaths
+                push!(matrices,DelimitedFiles.readdlm(j, Float64))
+            end
+            push!(simulParamArray,simulParam)
+            push!(matricesArray,matrices)
+            cd("..")
+            cd("..")
+        end
+        cd(original)
+        #saving the steps simulation as the last one 
+        return Dict(zip(simulParamArray,matricesArray))
+    end
 
     function WriteSimulParamTable(simulParam)
         open("simulationParameters.csv","w") do f 

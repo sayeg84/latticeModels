@@ -311,9 +311,9 @@ module CyclesRefactored
     "
     function FindCycles(latt,neigLatt,n,m)
         σo = copy(latt)
-        @time latt, σn = RemoveTails!(latt,neigLatt,n,m)
-        @time newNeigLatt = CycNeig(latt,neigLatt)
-        @time list, newNeigLatt, test, test2 = Walk(newNeigLatt)
+        latt, σn = RemoveTails!(latt,neigLatt,n,m)
+        newNeigLatt = CycNeig(latt,neigLatt)
+        list, newNeigLatt, test, test2 = Walk(newNeigLatt)
         σ2 = zeros(Int,n*m)   
         cont = 0
         while test2   

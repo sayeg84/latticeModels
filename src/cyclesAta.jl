@@ -226,9 +226,9 @@ module CyclesAta
     "ciclos(σ,vecino,n,m) regresa 3 arreglos, el que corresponde a los ciclos, el arreglo original y la diferencia entre los ciclos y el original"    
     function ciclos(σ,vecino,n1,m)
         σo = copy(σ)
-        @time σ, σn = quita_pelos!(σ,vecino,n1,m)
-        @time vecino2 = vecinos_s(σ,vecino)
-        @time lista, vecino2, test, test2 = recorrer(vecino2)
+        σ, σn = quita_pelos!(σ,vecino,n1,m)
+        vecino2 = vecinos_s(σ,vecino)
+        lista, vecino2, test, test2 = recorrer(vecino2)
         σ2 = zeros(Int,n1*m)   
         cont = 0
         while test2   

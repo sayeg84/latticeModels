@@ -49,33 +49,34 @@ function ParseCommandline()
     return parse_args(s)
 end
 
-#parsedArgs = ParseCommandline()
+parsedArgs = ParseCommandline()
 
 
 
-algoParam=[
-    500,
-    50,
-    4
-]
+algoParam=Array{Int64,1}([
+    floor(10^parsedArgs["steps"]),
+    floor(10^parsedArgs["frequency"]),
+    parsedArgs["averages"]
+])
 
 geoParam=[
-    10,
-    2,
-    "square"
+    parsedArgs["Nlatt"],
+    parsedArgs["dim"],
+    parsedArgs["Geometry"]
 ]
 
 #initializing parameters
-bArray=range(-3.0,stop=1.0,length=21)
+bArray=range(-3.0,stop=-1.0,length=21)
 jArray=[2.0]
-cArray=range(0.5,stop=1.5,length=21)
+cArray=[0.8]
+#cArray=range(0.5,stop=1.5,length=21)
 tArray=[0.5]
 
 println()
 println("Initializing Lattice")
 println()
 
-model="normal"
+model="cycle"
 latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
 
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
@@ -91,11 +92,12 @@ println()
     println(current)
     println()
     
-    @everywhere InOut.MakeAndEnterDirectories()
+    @sync @everywhere InOut.MakeAndEnterDirectories()
     @sync @distributed for i in 1:algoParam[3]
         X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,model)
-        mkdir(string(simulParam,"-",i))
-        cd(string(simulParam,"-",i))
+        name=string(simulParam,"_",i)
+        mkdir(name)
+        cd(name)
         InOut.MetropolisOut(X,algoParam)
         InOut.WriteAlgoParamTable(algoParam,"metropolis")
         InOut.WriteSimulParamTable(simulParam)

@@ -50,15 +50,15 @@ end
 
 parsedArgs = ParseCommandline()
 
-algoParam=[
-    10000,
-    100,
-    8
-]
+algoParam=Array{Int64,1}([
+    floor(10^parsedArgs["steps"]),
+    floor(10^parsedArgs["frequency"]),
+    parsedArgs["averages"]
+])
 geoParam=[
-    10,
-    2,
-    "square"
+    parsedArgs["Nlatt"],
+    parsedArgs["dim"],
+    parsedArgs["Geometry"]
 ]
 model="cycle"
 latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
@@ -87,20 +87,20 @@ for simulParam in params
     println()
     println(current)
     println()
-    resul=[]
-    for i in 1:8
-        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,model)
-        push!(resul,X)
-    end
-    
     InOut.MakeAndEnterDirectories()
-    mkdir(string(simulParam))
-    cd(string(simulParam))
-    InOut.MetropolisOut(mean(resul),algoParam)
-    InOut.WriteAlgoParamTable(algoParam,"metropolis")
-    InOut.WriteSimulParamTable(simulParam)
-    InOut.WriteGeoParamTable(geoParam)
-    cd("..")
-    InOut.ExitDirectories()
+    for i in 1:algoParam[3]
+        println(i)
+        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"cycle")
+        latt=copy(X[end])
+        name=string(simulParam,"_",i)
+        mkdir(name)
+        cd(name)
+        InOut.MetropolisOut(X,algoParam)
+        InOut.WriteAlgoParamTable(algoParam,"metropolis")
+        InOut.WriteSimulParamTable(simulParam)
+        InOut.WriteGeoParamTable(geoParam)
+        cd("..")
+    end
+    InOut.ExitDirectories()    
     
 end

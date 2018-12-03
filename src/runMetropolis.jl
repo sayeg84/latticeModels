@@ -95,27 +95,22 @@ println()
 println("Making simulation")
 println()
 # making simulation
-resul=[]
-for i in 1:algoParam[3]
-    X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"normal")
-    push!(resul,X)
-    latt=copy(X[end])
-end
-
-println()
-println("Writing output")
-println()
-
 InOut.MakeAndEnterDirectories()
-name=string(simulParam)
-mkdir(name)
-cd(name)
-InOut.MetropolisOut(mean(resul),algoParam)
-InOut.WriteAlgoParamTable(algoParam,"metropolis")
-InOut.WriteSimulParamTable(simulParam)
-InOut.WriteGeoParamTable(geoParam)
-cd("..")
+for i in 1:algoParam[3]
+    println(i)
+    X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"normal")
+    latt=copy(X[end])
+    name=string(simulParam,"_",i)
+    mkdir(name)
+    cd(name)
+    InOut.MetropolisOut(X,algoParam)
+    InOut.WriteAlgoParamTable(algoParam,"metropolis")
+    InOut.WriteSimulParamTable(simulParam)
+    InOut.WriteGeoParamTable(geoParam)
+    cd("..")
+end
 InOut.ExitDirectories()
+
 
 
 
