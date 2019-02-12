@@ -139,8 +139,8 @@ module CyclesAta
             while k == i  # tiene que elegir un camino que no sea regresar. 
                 n += 1
                 if n > length(vecino[j])
-                    @show "error", j, n, length(vecino[j])
-                    lista4, vecino2, true, true
+                    @show "error", j, n, vecino[j], length(vecino[j]) 
+                    return lista4, vecino2, true, true
                 end
                 k = vecino[j][n]
             end
@@ -258,13 +258,12 @@ module CyclesAta
         n=size(latt)[1]
         #println("hay ciclos")
         a=vectorizar(latt)
-        b=vecinos(n,n)
+        b=vecinos2(n,n)
         vec=ciclos(a,b,n,n)[2]
         return matrizar(vec,(n,n))
     end
-    #=
-    function TestSimilarity(nTests=100)
 
+    function TestSimilarity(nTests=100)
         c = 0
         t1 = 0
         t2 = 0
@@ -286,6 +285,25 @@ module CyclesAta
         println(t1)
         println(t2)
     end
-    TestSimilarity()
-    =#
+    #TestSimilarity()
+    
+    using DelimitedFiles
+    function SaveExample(n::Int64 = 16)
+        latt , neigLatt =  Geometry.BuildLattices( [n,2,"square"], "cycle")
+        open("../cycles.csv", "w") do io
+            DelimitedFiles.writedlm(io,ciclos2(latt),",")
+        end
+        open("../normal.csv", "w") do io
+            DelimitedFiles.writedlm(io,latt,",")
+        end  
+    end
+    function SaveReal(latt,neigLatt,i)
+        open(string("../cycles",i,".csv"), "w") do io
+            DelimitedFiles.writedlm(io,ciclos2(latt),",")
+        end
+        open(string("../normal",i,".csv"),"w") do io
+            DelimitedFiles.writedlm(io,latt,",")
+        end  
+    end
+    #SaveExample()
 end

@@ -24,7 +24,7 @@ function ParseCommandline()
         "-N", "--Nlatt" 
             help = "Lattice size"
             arg_type = Int64
-            default = 10
+            default = 50
         "-D", "--dim" 
             help = "Dimension"
             arg_type = Int64

@@ -92,7 +92,7 @@ println("Initializing Lattice")
 println()
 # Initializing first lattice
 
-latt , neigLatt =  Geometry.BuildLattices(geoParam)
+latt , neigLatt =  Geometry.BuildLattices(geoParam,"normal")
 
 println()
 println("Making simulation")
@@ -102,16 +102,8 @@ println()
 X=Algorithms.WangLandau(simulParam,algoParam,geoParam,latt,neigLatt,printLog=false)
 energyIntervals=X[1]
 s=X[2]
-tempArray=range(0.1,stop=5,length=50)
-ener=[]
-cv=[]
-mag=[]
-for temp in tempArray
-    push!(ener,StatEnsemble.DOSEnergy(s,energyIntervals,temp,geoParam)/((geoParam[1]^geoParam[2])))
-    push!(cv,StatEnsemble.DOSCV(s,energyIntervals,temp,geoParam)/(geoParam[1]^geoParam[2]))
-    push!(mag,StatEnsemble.DOSMag(s,energyIntervals,X[3],StatEnsemble.NormalEnergy,temp,geoParam)/(geoParam[1]^geoParam[2]))
-end
-X[5]
+mag=X[3]
+
 
 
 println()
@@ -121,10 +113,11 @@ println()
 
 InOut.MakeAndEnterDirectories()
 name="Single"
-mkdir(name)
+if ~(isdir(name))
+    mkdir(name)
+end
 cd(name)
-InOut.WriteDOSTable(s,energyIntervals)
+InOut.WriteDOSTable(s,mag,energyIntervals)
 InOut.WriteAlgoParamTable(algoParam,"WL")
 InOut.WriteSimulParamTable(simulParam)
 InOut.WriteGeoParamTable(geoParam)
-InOut.ExitDirectories()

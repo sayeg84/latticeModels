@@ -9,6 +9,7 @@ include("algorithms.jl")
 include("statEnsemble.jl")
 include("auxiliar.jl")
 include("geometry.jl")
+include("cyclesAta.jl")
 #using Algorithms,InOut,StatEnsemble, ArgParse
 using ArgParse, Statistics, Dates
 
@@ -22,7 +23,7 @@ function ParseCommandline()
         "-N", "--Nlatt" 
             help = "Lattice size"
             arg_type = Int64
-            default = 10
+            default = 16
         "-D", "--dim" 
             help = "Dimension"
             arg_type = Int64
@@ -34,7 +35,7 @@ function ParseCommandline()
         "-B", "--Bfield"
             help = "Magnetic field"
             arg_type = Float64
-            default = 0.0
+            default = -2.0
          "-J", "--Jconst"
             help = "Coupling constant of Ising model"
             arg_type = Float64
@@ -50,15 +51,15 @@ function ParseCommandline()
         "-S", "--steps"
             help = "logarithm base 10 of total steps"
             arg_type = Float64
-            default = 6.0
+            default = 4.0
         "-F", "--frequency"
             help = "logarithm base 10 of saving frecuency. Must be less than steps"
             arg_type = Float64
-            default = 4.0
+            default = 2.0
         "-A", "--averages"
             help = "Number of averages performed"
             arg_type = Int64
-            default = 5
+            default = 1
     end
     return parse_args(s)
 end
@@ -88,16 +89,18 @@ println()
 println("Initializing Lattice")
 println()
 # Initializing first lattice
-
 latt , neigLatt =  Geometry.BuildLattices(geoParam,"cycle")
-
+@show latt
 println()
 println("Making simulation")
 println()
 # making simulation
 InOut.MakeAndEnterDirectories()
+X=[]
 for i in 1:algoParam[3]
     println(i)
+    global latt
+    global neigLatt
     X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"cycle")
     latt=copy(X[end])
     name=string(simulParam,"_",i)
@@ -108,6 +111,9 @@ for i in 1:algoParam[3]
     InOut.WriteSimulParamTable(simulParam)
     InOut.WriteGeoParamTable(geoParam)
     cd("..")
+    for i in 1:length(X)
+        CyclesAta.SaveReal(X[i],neigLatt,i)
+    end
 end
 InOut.ExitDirectories()
 

@@ -89,8 +89,8 @@ module StatEnsemble
     end
 
 
-    function Magnetization(array,geoParam;ab=true)
-        if ab
+    function Magnetization(array,geoParam;absolute=true)
+        if absolute
             a=Statistics.mean([abs(sum(x)) for x in array])
         else 
             a=Statistics.mean([sum(x) for x in array])
@@ -99,18 +99,18 @@ module StatEnsemble
     end
 
     function InternalEnergy(array,model,geoParam,simulParam)
-        neigLatt=BuildLattices(geoParam,model)
+        neigLatt = Geometry.BuildLattices(geoParam,model)[2]
         if model=="normal"
             enerFunc=NormalEnergy
         else
-            enerFunc=PenalizedEnergy2
+            enerFunc=PenalizedEnergy3
         end
         a=Statistics.mean([enerFunc(x,neigLatt,simulParam) for x in array])
         return a/(geoParam[1]^geoParam[2])
     end
 
     function HeatCapacity(array,model,geoParam,simulParam)
-        neigLatt=BuildLattices(geoParam,model)
+        neigLatt = Geometry.BuildLattices(geoParam,model)[2]
         if model=="normal"
             enerFunc=NormalEnergy
         else
@@ -121,8 +121,8 @@ module StatEnsemble
         return 1/((simulParam[4]^2)*(geoParam[1]^geoParam[2]))*(a-b)
     end
 
-    function MagneticSucep(array,geoParam,simulParam;ab=true)
-        if ab
+    function MagneticSucep(array,geoParam,simulParam;absolute=true)
+        if absolute
             a=Statistics.mean([sum(x)^2 for x in array])
             b=(Statistics.mean([sum(x) for x in array]))^2
         else
@@ -172,26 +172,8 @@ module StatEnsemble
         return x
     end
 
-    function DOSMag(s,energyIntervals,mag,enerFunc,temp,geoParam;printLog=false)
-        x=0
-        for i in 1:length(s)
-            ener=(energyIntervals[i]+energyIntervals[i+1])*(geoParam[1]^geoParam[2])/2
-           x=x+mag[i]*exp(big(s[i])-ener/temp)
-            if printLog
-                println(energyIntervals[i])
-                println(m[i])
-                println(s[i])
-                println(ener)
-                println(ener/temp)
-                println(big(s[i])-ener/temp)
-                println(exp(big(s[i])-ener/temp))
-                println()
-            end
-        end
-        return abs(x)/(Partition(s,energyIntervals,temp,geoParam))
-    end
 
-    function DOSMagNoSave(s,energyIntervals,enerFunc,temp,geoParam;printLog=false)
+    function DOSMagnetizationNoSave(s,energyIntervals,enerFunc,temp,geoParam;printLog=false)
         m=MagArray(energyIntervals,enerFunc,geoParam)
         x=0
         for i in 1:length(s)
@@ -211,36 +193,62 @@ module StatEnsemble
         return x/(Partition(s,energyIntervals,temp,geoParam))
     end
 
-    function DOSEnergy(s,energyIntervals,temp,geoParam)
+    function DOSMagnetization(s,energyIntervals,mag,temp,geoParam;printLog=false)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*(geoParam[1]^geoParam[2])/2
+           x=x+mag[i]*exp(big(s[i])-ener/temp)
+            if printLog
+                println(energyIntervals[i])
+                println(m[i])
+                println(s[i])
+                println(ener)
+                println(ener/temp)
+                println(big(s[i])-ener/temp)
+                println(exp(big(s[i])-ener/temp))
+                println()
+            end
+        end
+        return abs(x)/(Partition(s,energyIntervals,temp,geoParam)*(geoParam[1]^geoParam[2]))
+    end
+
+    function DOSMagneticSucep(s,energyIntervals,mag,temp,geoParam;printLog=false)
+        x=0
+        for i in 1:length(s)
+            ener=(energyIntervals[i]+energyIntervals[i+1])*(geoParam[1]^geoParam[2])/2
+           x=x+(mag[i]^2)*exp(big(s[i])-ener/temp)
+            if printLog
+                println(energyIntervals[i])
+                println(m[i])
+                println(s[i])
+                println(ener)
+                println(ener/temp)
+                println(big(s[i])-ener/temp)
+                println(exp(big(s[i])-ener/temp))
+                println()
+            end
+        end
+        x=x/(Partition(s,energyIntervals,temp,geoParam)*(geoParam[1]^geoParam[2]))
+        return (    (x - (geoParam[1]^geoParam[2])*DOSMagnetization(s,energyIntervals,mag,temp,geoParam)^2))/temp
+    end
+
+    function DOSInternalEnergy(s,energyIntervals,temp,geoParam)
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*(geoParam[1]^geoParam[2])/2
             x=x+ener*exp(big(s[i])-ener/temp)
         end
-        return x/(Partition(s,energyIntervals,temp,geoParam))
+        return x/(Partition(s,energyIntervals,temp,geoParam)*(geoParam[1]^geoParam[2]))
     end
         
-    function DOSCV(s,energyIntervals,temp,geoParam)
+    function DOSHeatCapacity(s,energyIntervals,temp,geoParam)
         x=0
         for i in 1:length(s)
             ener=(energyIntervals[i]+energyIntervals[i+1])*(geoParam[1]^geoParam[2])/2
             x = x + ener^2 *exp(big(s[i])-ener/temp)
         end
-        x=x/Partition(s,energyIntervals,temp,geoParam)
-        return (x-DOSEnergy(s,energyIntervals,temp,geoParam)^2)/temp^2
+        x=x/(Partition(s,energyIntervals,temp,geoParam)*(geoParam[1]^geoParam[2]))
+        return (x-(geoParam[1]^geoParam[2])*DOSInternalEnergy(s,energyIntervals,temp,geoParam)^2)/temp^2
     end
-    #=
-    a=[-2.0,2.0,0.8,0.5]
-    b,c=Geometry.BuildLattices([6,2,"square"],"cycle")
-    b=[0 0 0 0 0 0;
-    0 0 0 0 0 0;
-    0 0 0 1 1 0;
-    0 0 1 1 1 0;
-    0 0 1 1 0 0;
-    0 0 0 0 0 0;
-    ]
-    @show b 
-    @show PenalizedEnergy2(b,c,a)
-    @show PenalizedEnergy3(b,c,a)
-    =#
+
 end

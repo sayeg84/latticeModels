@@ -256,7 +256,7 @@ module Geometry
     """
     function IndexLattice(latt,func;printLog=false)
         s=size(latt)
-        fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(s)
+        fin=Array{Array{CartesianIndex{length(s)},1},length(s)}(undef,s)
         for pos in CartesianIndices(s)
             fin[pos]=func(latt,pos)
         end

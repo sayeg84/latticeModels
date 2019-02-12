@@ -60,8 +60,8 @@ geoParam=[
     parsedArgs["dim"],
     parsedArgs["Geometry"]
 ]
-model="cycle"
-latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
+model="normal"
+global latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
 
 
 println()
@@ -70,10 +70,10 @@ println()
 # Initializing first lattice
 
 #initializing parameters
-bArray=[-1.0]
-jArray=[2.0]
-cArray=[0.8]
-tArray=[0.5]
+bArray = [0]
+jArray = [1]
+cArray = [0]
+tArray = range(0.1 , stop = 5 , length = 50)
 
 
 println()
@@ -81,6 +81,7 @@ println("Running simulations")
 println()
 
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
+
 
 for simulParam in params
     current="B, J, C, T = $(simulParam) "
@@ -90,8 +91,9 @@ for simulParam in params
     InOut.MakeAndEnterDirectories()
     for i in 1:algoParam[3]
         println(i)
-        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"cycle")
-        latt=copy(X[end])
+        global latt = latt
+        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"normal")
+        global latt=copy(X[end])
         name=string(simulParam,"_",i)
         mkdir(name)
         cd(name)

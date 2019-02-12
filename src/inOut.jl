@@ -1,7 +1,6 @@
 module InOut
-    using Plots, Rsvg, Dates, DelimitedFiles
+    using Plots, Rsvg, Dates, DelimitedFiles, Statistics
     gr()
-
     dest=Dates.format(Dates.now(),"dd-mm-Y HH:MM")
 
     """
@@ -78,6 +77,64 @@ module InOut
         cd("..")
     end
     """
+        ReadSingleSimul(name)
+
+        Function to read matrices from a single folder.
+    """
+    function ReadSingleSimul(name)
+        original=pwd()
+        cd(name)
+        print("Reading ")
+        println(name)
+        simulParam=InOut.ReadSimulParamTable()
+        geoParam=InOut.ReadGeoParamTable()
+        algoParam=InOut.ReadAlgoParamTable()
+        matrices=[]
+        cd("matrices")
+        #getting list of files
+        #
+        #
+        matricesPaths = [x for x in readdir() if isfile(x) && split(x,".")[end] == "csv"]
+        sort!(matricesPaths, by =mat->parse(Int64,split(mat,".")[1]) )
+        for mat in matricesPaths
+            push!(matrices,DelimitedFiles.readdlm(mat, Float64))
+        end
+        cd(original)
+        return matrices , geoParam, simulParam  , algoParam
+    end
+
+    """
+        ReadSingleMeanSimul(name)
+
+        Function to read mean of all matrices with same simulation parameters.
+    """
+    function ReadSingleMeanSimul(simulParam)
+        original=pwd()
+        dirs=Folders()
+        print("Reading ")
+        println(simulParam)
+        newDirs  = [d for d in dirs if split(d,"_")[1] == simulParam]
+        simMat= [] 
+        for folder in newDirs
+            matrices=[]
+            cd(folder)
+            cd("matrices")
+            simulParam=folder
+            #getting list of files
+            matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
+            sort!(matricesPaths, by =mat->parse(Int64,split(mat,".")[1]) )
+            for mat in matricesPaths
+                push!(matrices,DelimitedFiles.readdlm(mat, Float16))
+            end
+            push!(simMat,matrices)
+            cd("..")
+            cd("..")
+        end
+        cd(original)
+        return mean(simMat)
+    end
+
+    """
         MetropolisIn(name)
 
         Read all the matrices of a set of simulations, along with its parameters. 
@@ -96,8 +153,9 @@ module InOut
             simulParam=folder
             #getting list of files
             matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
-            for j in matricesPaths
-                push!(matrices,DelimitedFiles.readdlm(j, Float64))
+            sort!(matricesPaths, by =mat->parse(Int64,split(mat,".")[1]) )
+            for mat in matricesPaths
+                push!(matrices,DelimitedFiles.readdlm(mat, Float64))
             end
             push!(simulParamArray,simulParam)
             push!(matricesArray,matrices)
@@ -111,32 +169,39 @@ module InOut
     end
 
     """
-        MetropolisIn(name)
+        MetropolisMeanIn(name)
 
-        Read all the matrices of a set of simulations, along with its parameters. 
+        Read all the matrices of a set of simulations, along with its parameters. Retrun list of means with the same parameters
     """
-    function MetropolisSetIn(name)
+    function MetropolisMeanIn(name)
         #getting list of directories
         original=pwd()
         cd(name)
         dirs=Folders()
         sims=Set([split(d,"_")[1] for d in dirs])
-        simulParamArray=[]
-        matricesArray=[]
-        for sim in sims
-            matrices=[]
-            cd(folder)
-            cd("matrices")
-            simulParam=folder
-            #getting list of files
-            matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
-            for j in matricesPaths
-                push!(matrices,DelimitedFiles.readdlm(j, Float64))
+        simulParamArray = []
+        matricesArray = []
+        for simulParam in sims
+            print("Reading ")
+            println(simulParam)
+            newDirs  = [d for d in dirs if split(d,"_")[1] == simulParam]
+            simMat= [] 
+            @time for folder in newDirs
+                matrices=[]
+                cd(folder)
+                cd("matrices")
+                simulParam=folder
+                #getting list of files
+                matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
+                for mat in matricesPaths
+                    push!(matrices,DelimitedFiles.readdlm(mat, Float16))
+                end
+                push!(simMat,matrices)
+                cd("..")
+                cd("..")
             end
             push!(simulParamArray,simulParam)
-            push!(matricesArray,matrices)
-            cd("..")
-            cd("..")
+            push!(matricesArray,Statistics.mean(simMat))
         end
         cd(original)
         #saving the steps simulation as the last one 
@@ -145,50 +210,55 @@ module InOut
 
     function WriteSimulParamTable(simulParam)
         open("simulationParameters.csv","w") do f 
-            write(f,"B , $(simulParam[1]) \n")
-            write(f,"J , $(simulParam[2]) \n")
-            write(f,"C , $(simulParam[3]) \n")
-            write(f,"kT , $(simulParam[4]) \n")
+            write(f,"B,$(simulParam[1]) \n")
+            write(f,"J,$(simulParam[2]) \n")
+            write(f,"C,$(simulParam[3]) \n")
+            write(f,"kT,$(simulParam[4]) \n")
         end
     end
 
     function WriteGeoParamTable(geoParam)
         open("geometryParameters.csv","w") do f 
-            write(f,"N , $(geoParam[1]) \n")
-            write(f,"Dimension , $(geoParam[2]) \n")
-            write(f,"Geometry , $(geoParam[3]) \n")
+            write(f,"N,$(geoParam[1]) \n")
+            write(f,"Dimension,$(geoParam[2]) \n")
+            write(f,"Geometry,$(geoParam[3]) \n")
         end
     end
 
     function WriteAlgoParamTable(algoParam,algo)
         open("algorithmParameters.csv","w") do f
             if algo=="metropolis" 
-                write(f,"steps , $(algoParam[1]) \n")
-                write(f,"frecuency , $(algoParam[2]) \n")
-                write(f,"averages , $(algoParam[3]) \n")
+                write(f,"steps,$(algoParam[1]) \n")
+                write(f,"frecuency,$(algoParam[2]) \n")
+                write(f,"averages,$(algoParam[3]) \n")
             else
-                write(f,"Nbins , $(algoParam[1]) \n")
-                write(f,"Flatness percentage , $(algoParam[2]) \n")
-                write(f,"Change factor , $(algoParam[3]) \n")
-                write(f,"Maximum steps , $(algoParam[4]) \n")
+                write(f,"Nbins,$(algoParam[1]) \n")
+                write(f,"Flatness percentage,$(algoParam[2]) \n")
+                write(f,"Change factor,$(algoParam[3]) \n")
+                write(f,"Maximum steps,$(algoParam[4]) \n")
             end
         end
     end
 
     function ReadSimulParamTable()
-        x=DelimitedFiles.readdlm("simulationParameters.csv")
+        x=DelimitedFiles.readdlm("simulationParameters.csv",',')
         x=Array{Float64,1}(x[:,end])
         return x
     end
 
     function ReadGeoParamTable()
-        x=DelimitedFiles.readdlm("geometryParameters.csv")
+        x=DelimitedFiles.readdlm("geometryParameters.csv",',')
         x=Array(x[:,end])
+        for i in 1:length(x)
+            if typeof(x[i]) == SubString{String}
+                x[i] = split(x[i]," ")[2]
+            end
+        end
         return x
     end
 
     function ReadAlgoParamTable()
-        x=DelimitedFiles.readdlm("algorithmParameters.csv")
+        x=DelimitedFiles.readdlm("algorithmParameters.csv",',')
         x=Array(x[:,end])
         return x
     end
@@ -282,13 +352,23 @@ module InOut
     end
 
 
-    function WriteDOSTable(s,energyIntervals)
+    function WriteDOSTable(s,mag,energyIntervals)
         #write("DOS.csv")
         open("DOS.csv","w") do f 
-            write(f," E_i, E_f, S, DOS \n  ")
+            write(f," E_i, E_f, S, DOS, mag \n  ")
             for i in 1:length(s)
-                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i])),5)) \n")
+                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i])),digits=5)), $(mag[i]) \n")
             end
         end
+    end
+
+
+    function ReadDOSTable()
+        x=DelimitedFiles.readdlm("DOS.csv",',')
+        energyIntervals = Array{Float64,1}(x[2:end,1]) 
+        push!(energyIntervals,Float64(x[end,2]))
+        s = Array{Float64,1}(x[2:end,3])
+        mag = Array{Float64,1}(x[2:end,end])
+        return (energyIntervals, s, mag)
     end
 end

@@ -45,6 +45,7 @@ module Algorithms
             end
             if mod(i,algoParam[2])==0
                 push!(matArr,copy(mat))
+                println(i)
             end
         end
         return matArr
