@@ -98,6 +98,8 @@ println()
 InOut.MakeAndEnterDirectories()
 for i in 1:algoParam[3]
     println(i)
+    global latt
+    global neigLatt
     X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"normal")
     latt=copy(X[end])
     name=string(simulParam,"_",i)

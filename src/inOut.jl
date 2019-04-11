@@ -210,32 +210,32 @@ module InOut
 
     function WriteSimulParamTable(simulParam)
         open("simulationParameters.csv","w") do f 
-            write(f,"B,$(simulParam[1]) \n")
-            write(f,"J,$(simulParam[2]) \n")
-            write(f,"C,$(simulParam[3]) \n")
-            write(f,"kT,$(simulParam[4]) \n")
+            write(f,"B,$(simulParam[1])\n")
+            write(f,"J,$(simulParam[2])\n")
+            write(f,"C,$(simulParam[3])\n")
+            write(f,"kT,$(simulParam[4])\n")
         end
     end
 
     function WriteGeoParamTable(geoParam)
         open("geometryParameters.csv","w") do f 
-            write(f,"N,$(geoParam[1]) \n")
-            write(f,"Dimension,$(geoParam[2]) \n")
-            write(f,"Geometry,$(geoParam[3]) \n")
+            write(f,"N,$(geoParam[1])\n")
+            write(f,"Dimension,$(geoParam[2])\n")
+            write(f,"Geometry,$(geoParam[3])\n")
         end
     end
 
     function WriteAlgoParamTable(algoParam,algo)
         open("algorithmParameters.csv","w") do f
             if algo=="metropolis" 
-                write(f,"steps,$(algoParam[1]) \n")
-                write(f,"frecuency,$(algoParam[2]) \n")
-                write(f,"averages,$(algoParam[3]) \n")
+                write(f,"steps,$(algoParam[1])\n")
+                write(f,"frecuency,$(algoParam[2])\n")
+                write(f,"averages,$(algoParam[3])\n")
             else
-                write(f,"Nbins,$(algoParam[1]) \n")
-                write(f,"Flatness percentage,$(algoParam[2]) \n")
-                write(f,"Change factor,$(algoParam[3]) \n")
-                write(f,"Maximum steps,$(algoParam[4]) \n")
+                write(f,"Nbins,$(algoParam[1])\n")
+                write(f,"Flatness percentage,$(algoParam[2])\n")
+                write(f,"Change factor,$(algoParam[3])\n")
+                write(f,"Maximum steps,$(algoParam[4])\n")
             end
         end
     end
@@ -251,7 +251,7 @@ module InOut
         x=Array(x[:,end])
         for i in 1:length(x)
             if typeof(x[i]) == SubString{String}
-                x[i] = split(x[i]," ")[2]
+                x[i] = replace(x[i]," " =>"")
             end
         end
         return x

@@ -90,7 +90,6 @@ println("Initializing Lattice")
 println()
 # Initializing first lattice
 latt , neigLatt =  Geometry.BuildLattices(geoParam,"cycle")
-@show latt
 println()
 println("Making simulation")
 println()
@@ -111,9 +110,11 @@ for i in 1:algoParam[3]
     InOut.WriteSimulParamTable(simulParam)
     InOut.WriteGeoParamTable(geoParam)
     cd("..")
+    #=
     for i in 1:length(X)
         CyclesAta.SaveReal(X[i],neigLatt,i)
     end
+    =#
 end
 InOut.ExitDirectories()
 

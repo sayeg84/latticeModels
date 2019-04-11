@@ -263,6 +263,23 @@ module CyclesAta
         return matrizar(vec,(n,n))
     end
 
+    function sysToAdjMat(latt,neigLatt)
+        M = zeros(Int8,(prod(size(latt)),prod(size(latt))))
+        for pos in LinearIndices(latt)
+            for neig in neigLatt[pos]
+                j = LinearIndices(latt)[neig]
+                M[pos,j] = 1
+            end
+        end
+        return M
+    end
+    using LightGraphs
+    function graphBridges(M)
+        adjMat = sysToAdjMat(M)
+        
+    end
+
+
     function TestSimilarity(nTests=100)
         c = 0
         t1 = 0
@@ -297,7 +314,7 @@ module CyclesAta
             DelimitedFiles.writedlm(io,latt,",")
         end  
     end
-    function SaveReal(latt,neigLatt,i)
+    function SaveCopies(latt,neigLatt,i)
         open(string("../cycles",i,".csv"), "w") do io
             DelimitedFiles.writedlm(io,ciclos2(latt),",")
         end
