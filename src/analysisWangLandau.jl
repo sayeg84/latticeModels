@@ -7,12 +7,9 @@ println("Importing libraries")
 println()
 
 include("statEnsemble.jl")
-include("auxiliar.jl")
 include("inOut.jl")
-include("geometry.jl")
 
-using Plots, Rsvg, DelimitedFiles, ArgParse, Statistics
-gr()
+using DelimitedFiles, ArgParse, Statistics
 
 original=pwd()
 
@@ -45,12 +42,12 @@ function MacroscopicVariables(name,model,temparray)
     cd(name)
     cd("Single")
     energyIntervals, s, mag = InOut.ReadDOSTable()
-    geoParam = InOut.ReadGeoParamTable()
+    metaParam = InOut.ReadMetaParamTable()
     for temp in tempArray
-        push!(M,StatEnsemble.DOSMagnetization(s,energyIntervals,mag,temp,geoParam))
-        push!(E,StatEnsemble.DOSInternalEnergy(s,energyIntervals,temp,geoParam))
-        push!(CV,StatEnsemble.DOSHeatCapacity(s,energyIntervals,temp,geoParam))
-        push!(Xi,StatEnsemble.DOSMagneticSucep(s,energyIntervals,mag,temp,geoParam))
+        push!(M,StatEnsemble.DOSMagnetization(s,energyIntervals,mag,temp,metaParam))
+        push!(E,StatEnsemble.DOSInternalEnergy(s,energyIntervals,temp,metaParam))
+        push!(CV,StatEnsemble.DOSHeatCapacity(s,energyIntervals,temp,metaParam))
+        push!(Xi,StatEnsemble.DOSMagneticSucep(s,energyIntervals,mag,temp,metaParam))
     end
     cd(original)
     return ( M , E , CV , Xi )

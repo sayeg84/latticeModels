@@ -1,7 +1,14 @@
+include("structs.jl")
+
 module InOut
-    using Plots, Rsvg, Dates, DelimitedFiles, Statistics
-    gr()
-    dest=Dates.format(Dates.now(),"dd-mm-Y HH:MM")
+    import ..EdgList
+    import ..AdjMat
+    import ..SpinLattice
+    import ..LatticeGas
+    import ..IsingModel
+    import ..ChangeSpin!
+    using DelimitedFiles, Statistics, Dates
+    dest = Dates.format(Dates.now(),"dd-mm-Y HH:MM")
 
     """
         ParseArray(array::String)
@@ -17,7 +24,7 @@ module InOut
         a=[parse(Float64,x) for x in a]
         return a
     end
-    
+
     """
         Folders()
 
@@ -27,6 +34,7 @@ module InOut
         a=[x for x in readdir() if isdir(x) && ~(x[1]=='.')]
         return a
     end
+
     """
         MakeAndEnterDirectories()
 
@@ -39,7 +47,7 @@ module InOut
         end
         cd("outputs")
         if ~(isdir(dest))
-            mkdir(dest)
+            try mkdir(dest) catch SystemError end
         end
         cd(dest)
     end
@@ -56,26 +64,129 @@ module InOut
         cd("src")
     end
 
+    function WriteSimulParamTable(simulParam)
+        open("simulationParameters.csv","w") do io 
+            write(io,"B,$(simulParam[1])\n")
+            write(io,"J,$(simulParam[2])\n")
+            write(io,"C,$(simulParam[3])\n")
+            write(io,"kT,$(simulParam[4])\n")
+        end
+    end
+
+    function WriteMetaParamTable(metaParam)
+        open("metaParameters.csv","w") do io 
+            write(io,"N,$(metaParam[1])\n")
+            write(io,"Dimension,$(metaParam[2])\n")
+            write(io,"Geometry,$(metaParam[3])\n")
+            write(io,"Energy Function,$(metaParam[4])\n")
+            write(io,"N,$(metaParam[5])\n")
+        end
+    end
+
+    function WriteAlgoParamTable(algoParam,algo)
+        open("algorithmParameters.csv","w") do io
+            if algo=="metropolis" 
+                write(io,"steps,$(algoParam[1])\n")
+                write(io,"frecuency,$(algoParam[2])\n")
+                write(io,"averages,$(algoParam[3])\n")
+            else
+                write(io,"Nbins,$(algoParam[1])\n")
+                write(io,"Flatness percentage,$(algoParam[2])\n")
+                write(io,"Change factor,$(algoParam[3])\n")
+                write(io,"Maximum steps,$(algoParam[4])\n")
+            end
+        end
+    end
+
+    function WriteAdjMat(x::IsingModel)
+        M = AdjMat(x.linearNeigLatt)
+        open("adjMat.csv","w") do io
+            DelimitedFiles.writedlm(io,M,',')
+        end
+    end
+
+
+    function WriteDOSTable(s,mag,energyIntervals)
+        #write("DOS.csv")
+        open("DOS.csv","w") do io 
+            write(io," E_i, E_f, S, DOS, mag \n  ")
+            for i in 1:length(s)
+                write(io,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i])),digits=5)), $(mag[i]) \n")
+            end
+        end
+    end
+
+
+    function ReadSimulParamTable()
+        x=DelimitedFiles.readdlm("simulationParameters.csv",',')
+        x=Array{Float64,1}(x[:,end])
+        return x
+    end
+
+    function ReadMetaParamTable()
+        x=DelimitedFiles.readdlm("metaParameters.csv",',')
+        x=Array(x[:,end])
+        for i in 1:length(x)
+            if typeof(x[i]) == SubString{String}
+                x[i] = replace(x[i]," " =>"")
+            end
+        end
+        return x
+    end
+
+    function ReadAlgoParamTable()
+        x=DelimitedFiles.readdlm("algorithmParameters.csv",',')
+        x=Array(x[:,end])
+        return x
+    end
+
+    function ReadAdjMat()
+        M = DelimitedFiles.readdlm("adjMat.csv",',',Int64)
+        return M
+    end
+
+
+    function ReadDOSTable()
+        x=DelimitedFiles.readdlm("DOS.csv",',')
+        energyIntervals = Array{Float64,1}(x[2:end,1]) 
+        push!(energyIntervals,Float64(x[end,2]))
+        s = Array{Float64,1}(x[2:end,3])
+        mag = Array{Float64,1}(x[2:end,end])
+        return (energyIntervals, s, mag)
+    end
 
     """
-        MetropolisOut(X,param,name)
+        MetropolisSystemsOut(X,param,name)
 
         Outputs array of matrices X from Metropolis-based simulation with params `param` into a folder with name `name`
     """
-    function MetropolisOut(X,algoParam)
-        if ~(isdir("matrices"))
-            mkdir("matrices")
+
+    function MetropolisSystemsOut(X,algoParam)
+        if ~(isdir("systems"))
+            mkdir("systems")
         end
-        cd("matrices")
+        cd("systems")
         for i in 1:length(X)
             n=Int64((i-1)*algoParam[2])
             name="$(n).csv"
-            open(name,"w") do f
-                DelimitedFiles.writedlm(f,X[i])
+            open(name,"w") do io
+                DelimitedFiles.writedlm(io,X[i].linearLatt)
             end
         end
         cd("..")
     end
+
+    function MetropolisAllOut(initSys,changes,algoParam)
+        open("initial.csv","w") do io
+            DelimitedFiles.writedlm(io,initSys.linearLatt,',')
+        end
+        open("changes.csv","w") do io
+            for i in 1:algoParam[1]
+                write(io,"$(changes[i])\n")
+            end
+        end
+    end
+
     """
         ReadSingleSimul(name)
 
@@ -87,52 +198,54 @@ module InOut
         print("Reading ")
         println(name)
         simulParam=InOut.ReadSimulParamTable()
-        geoParam=InOut.ReadGeoParamTable()
+        metaParam=InOut.ReadMetaParamTable()
         algoParam=InOut.ReadAlgoParamTable()
-        matrices=[]
-        cd("matrices")
+        adjMat=InOut.ReadAdjMat()
+        systems=Array{IsingModel,1}()
+        cd("systems")
         #getting list of files
         #
         #
-        matricesPaths = [x for x in readdir() if isfile(x) && split(x,".")[end] == "csv"]
-        sort!(matricesPaths, by =mat->parse(Int64,split(mat,".")[1]) )
-        for mat in matricesPaths
-            push!(matrices,DelimitedFiles.readdlm(mat, Float64))
+        systemsPaths = [x for x in readdir() if isfile(x) &&split(x,".")[end] == "csv"]
+        sort!(systemsPaths, by = sys -> parse(Int64,split(sys,".")[1]) )
+        for sys in systemsPaths
+            sys = DelimitedFiles.readdlm(sys,',', Int64)
+            tu = (Int64(sqrt(length(sys))),Int64(sqrt(length(sys))))
+            x = SpinLattice(reshape(sys,length(sys)),adjMat,tu)
+            push!(systems,x)
         end
         cd(original)
-        return matrices , geoParam, simulParam  , algoParam
+        return systems , metaParam, simulParam , algoParam, adjMat
     end
-
-    """
-        ReadSingleMeanSimul(name)
-
-        Function to read mean of all matrices with same simulation parameters.
-    """
-    function ReadSingleMeanSimul(simulParam)
-        original=pwd()
-        dirs=Folders()
+    function ReadSingleSimul(name,frequency)
+        original = pwd()
+        cd(name)
         print("Reading ")
-        println(simulParam)
-        newDirs  = [d for d in dirs if split(d,"_")[1] == simulParam]
-        simMat= [] 
-        for folder in newDirs
-            matrices=[]
-            cd(folder)
-            cd("matrices")
-            simulParam=folder
-            #getting list of files
-            matricesPaths=[x for x in readdir() if isfile(x) && split(x,".")[end]=="csv"]
-            sort!(matricesPaths, by =mat->parse(Int64,split(mat,".")[1]) )
-            for mat in matricesPaths
-                push!(matrices,DelimitedFiles.readdlm(mat, Float16))
+        println(name)
+        simulParam = InOut.ReadSimulParamTable()
+        metaParam = InOut.ReadMetaParamTable()
+        algoParam = InOut.ReadAlgoParamTable()
+        adjMat = InOut.ReadAdjMat()
+        sys = DelimitedFiles.readdlm("initial.csv",',',Int8)
+        sys = reshape(sys,length(sys))
+        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
+        changes = DelimitedFiles.readdlm("changes.csv",',',Int32)
+        changes = reshape(changes,length(changes))
+        systems = Array{IsingModel,1}()
+        push!(systems,copy(sys))
+        for i in 1:algoParam[1]
+            if changes[i] != 0
+                ChangeSpin!(sys,changes[i])
             end
-            push!(simMat,matrices)
-            cd("..")
-            cd("..")
+            if mod(i,frequency) == 0
+                push!(systems,copy(sys))
+            end
         end
         cd(original)
-        return mean(simMat)
+        return systems , metaParam, simulParam , algoParam, adjMat
     end
+
+    #=
 
     """
         MetropolisIn(name)
@@ -207,168 +320,6 @@ module InOut
         #saving the steps simulation as the last one 
         return Dict(zip(simulParamArray,matricesArray))
     end
+=#
 
-    function WriteSimulParamTable(simulParam)
-        open("simulationParameters.csv","w") do f 
-            write(f,"B,$(simulParam[1])\n")
-            write(f,"J,$(simulParam[2])\n")
-            write(f,"C,$(simulParam[3])\n")
-            write(f,"kT,$(simulParam[4])\n")
-        end
-    end
-
-    function WriteGeoParamTable(geoParam)
-        open("geometryParameters.csv","w") do f 
-            write(f,"N,$(geoParam[1])\n")
-            write(f,"Dimension,$(geoParam[2])\n")
-            write(f,"Geometry,$(geoParam[3])\n")
-        end
-    end
-
-    function WriteAlgoParamTable(algoParam,algo)
-        open("algorithmParameters.csv","w") do f
-            if algo=="metropolis" 
-                write(f,"steps,$(algoParam[1])\n")
-                write(f,"frecuency,$(algoParam[2])\n")
-                write(f,"averages,$(algoParam[3])\n")
-            else
-                write(f,"Nbins,$(algoParam[1])\n")
-                write(f,"Flatness percentage,$(algoParam[2])\n")
-                write(f,"Change factor,$(algoParam[3])\n")
-                write(f,"Maximum steps,$(algoParam[4])\n")
-            end
-        end
-    end
-
-    function ReadSimulParamTable()
-        x=DelimitedFiles.readdlm("simulationParameters.csv",',')
-        x=Array{Float64,1}(x[:,end])
-        return x
-    end
-
-    function ReadGeoParamTable()
-        x=DelimitedFiles.readdlm("geometryParameters.csv",',')
-        x=Array(x[:,end])
-        for i in 1:length(x)
-            if typeof(x[i]) == SubString{String}
-                x[i] = replace(x[i]," " =>"")
-            end
-        end
-        return x
-    end
-
-    function ReadAlgoParamTable()
-        x=DelimitedFiles.readdlm("algorithmParameters.csv",',')
-        x=Array(x[:,end])
-        return x
-    end
-
-
-    function MakeParamsTable(param,temp,geo)
-        cd("..")
-        cd("outputs")
-        cd(dest)
-        open("params.txt","w") do f
-            write(f,"Modelo de ising. Fecha: $(dest) \n")
-            write(f," ,Tiempo de ejecución: $(round(time,digits=2)) \n")
-            write(f,"n: param[1]")
-            write(f,"B: param[3]")
-            write(f,"J: param[2]")
-            write(f,"C: param[7]")
-            write(f,"KT: $(temp)")
-            writef(f,"Geometría: $(geo)")
-        end
-        cd("..")
-        cd("..")
-        cd("src")
-    end
-
-    function MakePlots(t,a1,a2,a3,param)
-        cd("..")
-        cd("outputs")
-        cd(dest)
-        Plots.scatter(t,a1,
-            title="Magnetizacion",
-            xlabel="Temperatura (KB=1)",
-            ylabel="Magnetizacion absoluta promedio por spin",
-            label="simulación con N=$(param[1]^2)"
-        )
-        #Plots.plot!(T,[magOnsager(t) for t in T],label="Solución teórica")
-        #Plots.plot!([2.3,2.3],[0,1],linestyle=:dash,label="Temperatura crítica     ")
-        Plots.savefig("mag.png")
-        #display(p)
-
-
-        scatter(t,a2,
-            title="Energia",
-            xlabel="Temperatura (KB=1)",
-            ylabel="Energía promedio por spin",
-            label="simulación con N=$(param[1]^2)"
-        )
-
-        #Plots.plot!(T,[energiaOnsager(t) for t in T],label="Solución teórica")
-        #Plots.plot!([2.3,2.3],[-2,0],linestyle=:dash,label="Temperatura crítica     ")
-        Plots.savefig("ener.png")
-        #display(p)
-
-
-
-        scatter(t,a3,
-            ylim=(0.0,maximum(a3[5:end])),
-            title="Capacidad calorífica",
-            xlabel="Temperatura (KB=1)",
-            ylabel="Capacidad calorífica por spin",
-            label="simulación con N=$(param[1]^2)"
-        )
-        #Plots.plot!(T,[cvOnsager(t) for t in T],label="Solución teórica")
-        #Plots.plot!([2.3,2.3],[0,2],ylim=(0,2),linestyle=:dash,label="Temperatura crítica      ")
-        Plots.savefig("cv.png")
-        cd("..")
-        cd("..")
-        cd("src")
-    end
-
-    function MakeTable(t,a1,a2,a3,param,time)
-        cd("..")
-        cd("outputs")
-        cd(dest)
-        #write("datos.csv")
-        open("datos.csv","w") do f 
-            write(f,"Modelo de ising,Fecha, $(dest) \n")
-            write(f," ,Tiempo de ejecución, $(round(time,digits=2)) \n")
-            write(f," Parámetros \n")
-            write(f," n, J, B, pasos, frecuencia, bins, C \n ")
-            write(f," $(param[1]), $(param[2]), $(param[3]), $(param[4]), $(param[5]), $(param[6]), $(param[7]) \n ")
-            #write(f," $n, $J, $B, $(pasos), $(freq) \n ")
-            write(f,"\n")
-            write(f,"T,M,E,CV \n")
-            for i in 1:length(t)
-                write(f,"$(t[i]), $(a1[i]),$(a2[i]), $(a3[i]) \n")
-            end
-        end
-        cd("..")
-        cd("..")
-        cd("src")
-    end
-
-
-    function WriteDOSTable(s,mag,energyIntervals)
-        #write("DOS.csv")
-        open("DOS.csv","w") do f 
-            write(f," E_i, E_f, S, DOS, mag \n  ")
-            for i in 1:length(s)
-                write(f,"$(energyIntervals[i]), $(energyIntervals[i+1]), $(s[i]), $(round(exp(big(s[i])),digits=5)), $(mag[i]) \n")
-            end
-        end
-    end
-
-
-    function ReadDOSTable()
-        x=DelimitedFiles.readdlm("DOS.csv",',')
-        energyIntervals = Array{Float64,1}(x[2:end,1]) 
-        push!(energyIntervals,Float64(x[end,2]))
-        s = Array{Float64,1}(x[2:end,3])
-        mag = Array{Float64,1}(x[2:end,end])
-        return (energyIntervals, s, mag)
-    end
 end

@@ -1,5 +1,4 @@
-sandbox/*
-doc/*
-logs/*
-*.log
 outputs/*
+*.csv
+*.png
+

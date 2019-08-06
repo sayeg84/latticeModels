@@ -54,7 +54,7 @@ end
 parsedArgs = ParseCommandline()
 original = pwd()
 
-function ThermalizationPlots(X,model,geoParam,simulParam,algoParam,cut=1/2)
+function ThermalizationPlots(X,model,metaParam,simulParam,algoParam,cut=1/2)
     if model=="normal"
         enerFunc=StatEnsemble.NormalEnergy
         n1 = "\$ \\mathcal{M} / N \$"
@@ -73,11 +73,11 @@ function ThermalizationPlots(X,model,geoParam,simulParam,algoParam,cut=1/2)
     f3=22
     size=20
 
-    neigLatt=Geometry.BuildLattices(geoParam,model)[2]
+    neigLatt=Geometry.BuildLattices(metaParam,model)[2]
     steps=[(i-1)*(algoParam[2]) for i in 1:length(X)]
-    den=[abs(sum(x))/(geoParam[1]^geoParam[2]) for x in X]
+    den=[abs(sum(x))/(metaParam[1]^metaParam[2]) for x in X]
     print("Calculating energy ... ")
-    en=[enerFunc(x,neigLatt,simulParam)/(geoParam[1]^geoParam[2]) for x in X]
+    en=[enerFunc(x,neigLatt,simulParam)/(metaParam[1]^metaParam[2]) for x in X]
     println("done")
 
     println("Making first plot")

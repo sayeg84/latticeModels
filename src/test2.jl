@@ -1,0 +1,5 @@
+include("structs.jl")
+include("lattices.jl")
+include("test1.jl")
+x  = SpinLattice(Lattices.PeriodicSquareLatticeNeighbors,10,2)
+test1.test(x)

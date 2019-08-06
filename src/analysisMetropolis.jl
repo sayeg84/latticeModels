@@ -7,12 +7,9 @@ println("Importing libraries")
 println()
 
 include("statEnsemble.jl")
-include("auxiliar.jl")
 include("inOut.jl")
-include("geometry.jl")
 
-using Plots, Rsvg, DelimitedFiles, ArgParse, Statistics, LaTeXStrings
-pyplot()
+using DelimitedFiles, ArgParse, Statistics
 
 original=pwd()
 
@@ -24,14 +21,19 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Dirname" 
+        "-D", "--path" 
             help = "Directory path to analyse set"
             arg_type = String
             required=true
-        "-N", "--Ncut" 
+        "-N", "--ncut" 
             help = "Directory path to analyse set"
             arg_type = Float64
             default = 1/2
+        "-F", "--frequency" 
+            help = "Frecuency of elements loaded in chain"
+            arg_type = Int64
+            default = 100
+
     end
     return parse_args(s)
 end
@@ -51,14 +53,14 @@ function MacroscopicVariables(name,model;cut=1/2)
     cd(name)
     dirs=InOut.Folders()
     for simulParam in dirs
-        @time data = InOut.ReadSingleSimul(simulParam)
+        @time data = InOut.ReadSingleSimul(simulParam,parsedArgs["frequency"])
         ncut=Int64(floor(length(data[1])*cut))
         X=data[1][ncut:end]
         simulParam = InOut.ParseArray(string(split(simulParam,"_")[1]))
-        push!(M,StatEnsemble.Magnetization(X,data[2]))
-        push!(E,StatEnsemble.InternalEnergy(X,model,data[2],data[3]))
-        push!(CV,StatEnsemble.HeatCapacity(X,model,data[2],data[3]))
-        push!(Xi,StatEnsemble.MagneticSucep(X,data[2],data[3])) 
+        push!(M,StatEnsemble.Magnetization(X))
+        push!(E,StatEnsemble.InternalEnergy(X,StatEnsemble.PenalizedEnergy,data[3]))
+        push!(CV,StatEnsemble.HeatCapacity(X,StatEnsemble.PenalizedEnergy,data[3]))
+        push!(Xi,StatEnsemble.MagneticSucep(X,data[3])) 
     end
     cd(original)
     return ( dirs , M , E , CV , Xi )
@@ -103,13 +105,13 @@ end
 
 println()
 println("Making Analysis")
-println("Ncut = $(parsedArgs["Ncut"])")
+println("ncut = $(parsedArgs["ncut"])")
 println()
 
 
 
 model = "cycle"
-vals = MacroscopicVariables(parsedArgs["Dirname"],model,cut=parsedArgs["Ncut"])
+@time vals = MacroscopicVariables(parsedArgs["path"],model,cut = parsedArgs["ncut"])
 vals = AverageMacroscopicVariables(vals)
-MacroscopicTables(parsedArgs["Dirname"],vals)
+MacroscopicTables(parsedArgs["path"],vals)
 

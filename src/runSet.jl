@@ -3,14 +3,13 @@ println()
 println()
 println("Importing libraries")
 println()
-using ArgParse, Statistics, Dates, Distributed, SharedArrays
 
-include("inOut.jl")
+using ArgParse, Statistics, Dates
+
+include("lattices.jl")
 include("algorithms.jl")
-include("statEnsemble.jl")
-include("auxiliar.jl")
-include("geometry.jl")
-#using Algorithms,InOut,StatEnsemble, ArgParse
+include("inOut.jl")
+
 
 
 println()
@@ -32,10 +31,18 @@ function ParseCommandline()
             help = "Lattice geometry"
             arg_type = String
             default = "square"
+        "-E", "--EnerFunc" 
+            help = "Energy function"
+            arg_type = String
+            default = "NormalEnergy"
+        "-M", "--Model" 
+            help = "Lattice geometry"
+            arg_type = String
+            default = "SpinLattice"
         "-S", "--steps"
             help = "logarithm base 10 of total steps"
             arg_type = Float64
-            default = 6.0
+            default = 5.0
         "-F", "--frequency"
             help = "logarithm base 10 of saving frecuency. Must be less than steps"
             arg_type = Float64
@@ -43,7 +50,7 @@ function ParseCommandline()
         "-A", "--averages"
             help = "Number of averages performed"
             arg_type = Int64
-            default = 5
+            default = 2
     end
     return parse_args(s)
 end
@@ -55,26 +62,35 @@ algoParam=Array{Int64,1}([
     floor(10^parsedArgs["frequency"]),
     parsedArgs["averages"]
 ])
-geoParam=[
+metaParam=[
     parsedArgs["Nlatt"],
     parsedArgs["dim"],
-    parsedArgs["Geometry"]
+    parsedArgs["Geometry"],
+    parsedArgs["EnerFunc"],
+    parsedArgs["Model"]
 ]
-model="normal"
-global latt , neigLatt =  Geometry.BuildLattices(geoParam,model)
+
 
 
 println()
 println("Initializing Lattice")
 println()
 # Initializing first lattice
+initSys  = getfield(Main,Symbol(metaParam[5]))(Lattices.PeriodicSquareLatticeNeighbors,metaParam[1],metaParam[2])
+
+enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
 
 #initializing parameters
 bArray = [0]
 jArray = [1]
 cArray = [0]
-tArray = range(0.1 , stop = 5 , length = 50)
+tArray = range(0.1 , stop = 5 , length = 21)
 
+#bArray = range(-3.3,stop = -1.5,length = 31)
+#jArray = [2.0]
+#cArray = [0.8]
+#tArray = [0.5]
+#
 
 println()
 println("Running simulations")
@@ -83,26 +99,30 @@ println()
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
 
 
-for simulParam in params
+@time for simulParam in params
     current="B, J, C, T = $(simulParam) "
     println()
     println(current)
     println()
     InOut.MakeAndEnterDirectories()
+    println()
+    println("Making simulation")
+    println()
+    # making simulation
     for i in 1:algoParam[3]
         println(i)
-        global latt = latt
-        X=Algorithms.Metropolis(simulParam,algoParam,latt,neigLatt,"normal")
-        global latt=copy(X[end])
+        global initSys
+        res = Algorithms.MetropolisOptimal(initSys,enerFunc,simulParam,algoParam)
         name=string(simulParam,"_",i)
         mkdir(name)
         cd(name)
-        InOut.MetropolisOut(X,algoParam)
+        InOut.MetropolisAllOut(initSys,res[1],algoParam)
         InOut.WriteAlgoParamTable(algoParam,"metropolis")
         InOut.WriteSimulParamTable(simulParam)
-        InOut.WriteGeoParamTable(geoParam)
+        InOut.WriteMetaParamTable(metaParam)
+        InOut.WriteAdjMat(initSys)
+        initSys = copy(res[2])
         cd("..")
     end
-    InOut.ExitDirectories()    
-    
-end
+    InOut.ExitDirectories()
+end    
