@@ -46,25 +46,25 @@ def groupedPlots(color2,colorbar="double"):
         
         axs[0][0].plot(mus,mag[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
-        #axs[0][0].errorbar(mus,mag[c],yerr=mags[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
+        axs[0][0].errorbar(mus,mag[c],yerr=mags[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
         axs[0][0].scatter(mus,mag[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), s=size)
         
         axs[1][0].plot(mus,chi[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
-        #axs[1][0].errorbar(mus,chi[c],yerr=chis[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
+        axs[1][0].errorbar(mus,chi[c],yerr=chis[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
         axs[1][0].scatter(mus,chi[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), s=size)
         
         axs[0][1].plot(mus,ener[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
-        #axs[0][1].errorbar(mus,ener[c],yerr=eners[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
+        axs[0][1].errorbar(mus,ener[c],yerr=eners[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
         axs[0][1].scatter(mus,ener[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), s=size)
         
         axs[1][1].plot(mus,cv[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
-        #axs[1][1].errorbar(mus,cv[c],yerr=cvs[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
+        axs[1][1].errorbar(mus,cv[c],yerr=cvs[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), lw = 2)
         
         axs[1][1].scatter(mus,cv[c],label = r"$C = {0}$".format(cs[c]),color=colormap(normalize(cs[c])), s=size)
     

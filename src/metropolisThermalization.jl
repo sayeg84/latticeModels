@@ -10,7 +10,7 @@ include("statEnsemble.jl")
 include("auxiliar.jl")
 include("inOut.jl")
 include("geometry.jl")
-
+#=
 using PyPlot, DelimitedFiles, ArgParse, Statistics
 
 function NormalDistribution(x ; mu = 0 , sigma = 1)
@@ -295,3 +295,4 @@ data = InOut.ReadSingleSimul(parsedArgs["Dirname"])
 cd(parsedArgs["Dirname"])
 ThermalizationPlots(data[1],"cycle",data[2],data[3],data[4])
 cd(original)
+=#
