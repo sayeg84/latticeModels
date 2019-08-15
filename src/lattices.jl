@@ -1,6 +1,6 @@
 module Lattices
     #using Plots
-    gr()
+    #gr()
     """
         PeriodicSquareLatticeNeighbors(latt,pos)
 
