@@ -87,8 +87,7 @@ module InOut
         open("algorithmParameters.csv","w") do io
             if algo=="metropolis" 
                 write(io,"steps,$(algoParam[1])\n")
-                write(io,"frecuency,$(algoParam[2])\n")
-                write(io,"averages,$(algoParam[3])\n")
+                #write(io,"averages,$(algoParam[3])\n")
             else
                 write(io,"Nbins,$(algoParam[1])\n")
                 write(io,"Flatness percentage,$(algoParam[2])\n")
@@ -186,37 +185,7 @@ module InOut
             end
         end
     end
-
-    """
-        ReadSingleSimul(name)
-
-        Function to read matrices from a single folder.
-    """
-    function ReadSingleSimul(name)
-        original=pwd()
-        cd(name)
-        print("Reading ")
-        println(name)
-        simulParam=InOut.ReadSimulParamTable()
-        metaParam=InOut.ReadMetaParamTable()
-        algoParam=InOut.ReadAlgoParamTable()
-        adjMat=InOut.ReadAdjMat()
-        systems=Array{IsingModel,1}()
-        cd("systems")
-        #getting list of files
-        #
-        #
-        systemsPaths = [x for x in readdir() if isfile(x) &&split(x,".")[end] == "csv"]
-        sort!(systemsPaths, by = sys -> parse(Int64,split(sys,".")[1]) )
-        for sys in systemsPaths
-            sys = DelimitedFiles.readdlm(sys,',', Int64)
-            tu = (Int64(sqrt(length(sys))),Int64(sqrt(length(sys))))
-            x = SpinLattice(reshape(sys,length(sys)),adjMat,tu)
-            push!(systems,x)
-        end
-        cd(original)
-        return systems , metaParam, simulParam , algoParam, adjMat
-    end
+    
     function ReadSingleSimul(name,frequency)
         original = pwd()
         cd(name)

@@ -7,7 +7,7 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-Distributed.addprocs(4)
+Distributed.addprocs(Sys.CPU_THREADS-1)
 
 
 @sync @everywhere include("inOut.jl")
@@ -33,7 +33,7 @@ function ParseCommandline()
         "-G", "--Geometry" 
             help = "Lattice geometry"
             arg_type = String
-            default = "square"
+            default = "PeriodicSquare"
         "-E", "--EnerFunc" 
             help = "Energy function"
             arg_type = String
@@ -46,14 +46,10 @@ function ParseCommandline()
             help = "logarithm base 10 of total steps"
             arg_type = Float64
             default = 5.0
-        "-F", "--frequency"
-            help = "logarithm base 10 of saving frecuency. Must be less than steps"
-            arg_type = Float64
-            default = 3.5
-        "-A", "--averages"
-            help = "Number of averages performed"
+        "-A", "--Systems"
+            help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
-            default = 8
+            default = Sys.CPU_THREADS-1
     end
     return parse_args(s)
 end
@@ -64,37 +60,37 @@ parsedArgs = ParseCommandline()
 
 algoParam=Array{Int64,1}([
     floor(10^parsedArgs["steps"]),
-    floor(10^parsedArgs["frequency"]),
-    parsedArgs["averages"]
+    parsedArgs["Systems"]
 ])
 
 metaParam=[
     parsedArgs["Nlatt"],
     parsedArgs["dim"],
-    parsedArgs["Geometry"],
+    string(parsedArgs["Geometry"],"LatticeNeighbors"),
     parsedArgs["EnerFunc"],
     parsedArgs["Model"]
 ]
 
 #initializing parameters
 
-#bArray = [0]
-#jArray = [1]
-#cArray = [0]
-#tArray = range(0.1 , stop = 5 , length = 21)
+bArray = [0]
+jArray = [1]
+cArray = [0]
+tArray = range(0.1 , stop = 5 , length = 21)
 
-bArray = range(-3.3,stop = -1.5,length = 31)
-jArray = [2.0]
-cArray = [0.8]
-tArray = [0.5]
+#bArray = range(-3.3,stop = -1.5,length = 31)
+#jArray = [2.0]
+#cArray = [0.8]
+#tArray = [0.5]
 
 println()
 println("Initializing Lattice")
 println()
 
 
-
-let y  = getfield(Main,Symbol(metaParam[5]))(Lattices.PeriodicSquareLatticeNeighbors,metaParam[1],metaParam[2])
+neigFunc = getfield(Lattices,Symbol(metaParam[3]))
+sysFunc = getfield(Main,Symbol(metaParam[5])) 
+let y  = sysFunc(neigFunc,metaParam[1],metaParam[2])
     @sync @everywhere initSys = $y
 end
 
@@ -117,7 +113,7 @@ println()
     println()
     
     @sync @everywhere InOut.MakeAndEnterDirectories()
-    @sync @distributed for i in 1:algoParam[3]
+    @sync @distributed for i in 1:algoParam[2]
         global initSys
         res = Algorithms.MetropolisFast(initSys,enerFunc,simulParam,algoParam)
         name=string(simulParam,"_",i)

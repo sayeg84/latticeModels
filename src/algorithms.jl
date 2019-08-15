@@ -120,6 +120,16 @@ module Algorithms
             return false
         end
     end
+    function EnergyBounds(x::IsingModel,simulParam)
+        n = N(x)
+        min = 0
+        max = max = N(x)*(simulParam[1]+Order(x)*(simulParam[2]+simulParam[3]))
+    end
+    function EnergyBounds(x::LatticeGas,simulParam)
+        n = N(x)
+        min = N(x)*(-simulParam[1]-Order(x)*simulParam[2])
+        max = N(x)*(+simulParam[1]+Order(x)*(simulParam[2]+simulParam[3]))
+    end 
 
     """
         SearchSortedMod(x,a)
@@ -154,6 +164,7 @@ module Algorithms
             return -1
         end
     end
+
 
     function WangLandau(simulParam,algoParam,metaParam,init;printLog=false)
         last = []
@@ -379,161 +390,3 @@ module Algorithms
         return (energyIntervals,s,mag,last,n)
     end
 end
-    #=
-    function Metropolis(simulParam,algoParam,init,neigLatt,model;printLog=false)
-        
-        if model=="normal"
-            enerFunc=StatEnsemble.NormalEnergy
-            nrml=true
-        else
-            enerFunc=StatEnsemble.PenalizedEnergy3
-            nrml=false
-        end
-        matArr=[]
-        mat=initLatt
-        push!(matArr,copy(mat))
-        for i in 1:(algoParam[1])
-            pos=Auxiliar.RandomPosition(mat)
-            res=0.0
-            res=StatEnsemble.Prob(mat,neigLatt,pos,simulParam,enerFunc,nrml)
-            t=rand()
-            if printLog
-                print("iter = ")
-                println(i-1)
-                println("lattice")
-                println(mat)
-                print("Postion = ")
-                println(pos)
-                print("Probability = ")
-                println(res)
-                print("Random number = ")
-                println(t)
-                println()
-                println()
-            end
-            if res>t
-                mat = Auxiliar.ChangeSpin(mat,pos,normal=nrml)
-            end
-            if mod(i,algoParam[2])==0
-                push!(matArr,copy(mat))
-                println(i)
-            end
-        end
-        return matArr
-    end
-    
-    # =============================================
-    # Wang-Landau beggining
-    
-
-    function WangLandauCycle(simulParam,algoParam,metaParam,initLatt,neigLatt;printLog=false)
-        last=[]
-        Nbins=Int64(algoParam[1])
-        globalHist=zeros(Nbins)
-        mag=zeros(Nbins)
-        hist=zeros(Nbins)
-        s=zeros(Nbins)
-        energyIntervals=collect(range(-2,stop=2,length=Int64(algoParam[1]+1)))
-        modfact=1
-        latt=copy(initLatt)
-        n=0
-        while (modfact>=1e-5)
-            pos=Auxiliar.RandomPosition(latt)
-            if printLog
-                println(latt)
-            end
-            try energyBefore=StatEnsemble.PenalizedEnergy2(latt,neigLatt,simulParam,printLog=printLog)
-            catch LoadError
-                #println("antes")
-                #println(latt)
-                #println(energyBefore)
-                #error("Wrong lattice")
-            end
-            try energyAfter=StatEnsemble.PenalizedEnergy2(Auxiliar.ChangeSpin(latt,pos,normal=false),param,neigLatt,printLog=printLog)
-            catch LoadError 
-                #println("después")
-                #println(Auxiliar.ChangeSpin(latt,pos))
-                #println(energyAfter)
-                #error("Wrong lattice")
-            end
-            energyBefore=energyBefore/(metaParam[1]^metaParam[2])
-            energyAfter=energyAfter/(metaParam[1]^metaParam[2])
-            p1=Auxiliar.SearchSortedMod(energyIntervals,energyBefore)
-            p2=Auxiliar.SearchSortedMod(energyIntervals,energyAfter)
-            tes=rand()
-            last=[]
-            if printLog
-                println("iter")
-                println(n)
-                println("latt")
-                println(latt)
-                println("pos")
-                println(pos)
-                println("neigs")
-                println(neigLatt[pos])
-                println()
-                println()
-                println(neigLatt)
-                println()
-                println()
-                println("hist")
-                println(hist)
-                println("entropy")
-                println(s)
-                println("before")
-                println(energyBefore)
-                println("bin")
-                println(p1)
-                println("after")
-                println(energyAfter)
-                println("bin")
-                println(p2)
-                println("probab")
-                println(exp(s[p1]-s[p2]))
-                println("rand")
-                println(tes)
-                println("avg")
-                println(Statistics.mean(hist))
-                println("min")
-                println(minimum(hist))
-            end
-            globalHist[p1]+=1
-            mag[p1]=(mag[p1]*(globalHist[p1]-1)+abs(sum(latt))/(metaParam[1]^metaParam[2]))*1/(globalHist[p1])
-            η=exp(big(s[p1]-s[p2]))
-            if  tes < η
-                latt=Auxiliar.ChangeSpin(latt,pos,normal=false)
-            end
-            s[p1]+=modfact
-            hist[p1]+=1
-            if isFlat(hist)
-                modfact=modfact*1/2
-                last=copy(hist)
-                hist=zeros(Nbins)
-                println(n)
-                println("change")
-                println(modfact)
-            end
-            if mod(n,10^5) == 0 && ~printLog
-                print("iter: ")
-                println(n)
-                println()
-            end
-            if n==10^9
-                println("Exceded tolerance")
-                #normalization
-                s=[s[i]-s[1] for i in 1:length(s)]
-                mag=mag*(metaParam[1]^metaParam[2])
-                return (energyIntervals,s,mag,last,n)
-            end
-            n=n+1
-        end
-        print("Iterations: ")
-        println(n)
-        #normalization
-        s=[s[i]-s[1] for i in 1:length(s)]
-        mag=mag*(metaParam[1]^metaParam[2])
-        return (energyIntervals,s,mag,last,n)
-    end
-
-end
-=#

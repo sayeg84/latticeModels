@@ -11,6 +11,10 @@ include("auxiliar.jl")
 include("inOut.jl")
 include("geometry.jl")
 #=
+
+##remove references to algoParam[2]
+
+
 using PyPlot, DelimitedFiles, ArgParse, Statistics
 
 function NormalDistribution(x ; mu = 0 , sigma = 1)

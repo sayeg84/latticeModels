@@ -11,6 +11,9 @@ include("auxiliar.jl")
 include("inOut.jl")
 include("geometry.jl")
 include("cyclesAta.jl")
+#=
+
+Refactor all
 
 using ArgParse, Statistics, PyPlot
 PyPlot.rc("text", usetex=true)
@@ -100,3 +103,4 @@ println("Making figures")
 println()
 MakeFiguresSequence(data[1],data[2],data[4])
 cd(original)
+=#

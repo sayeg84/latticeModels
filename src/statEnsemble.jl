@@ -1,6 +1,7 @@
 
 include("cycles.jl")
 module StatEnsemble
+    
     import ..SpinLattice
     import ..LatticeGas
     import ..IsingModel
@@ -10,7 +11,7 @@ module StatEnsemble
     import ..Cycles.ciclos2
 
 
-    using Statistics
+    using Statistics,LinearAlgebra
     """
         NormalEnergy(latt,neigLatt,simulParam)
 
@@ -91,6 +92,31 @@ module StatEnsemble
         a=Statistics.mean([enerFunc(x,simulParam)^2 for x in X])
         b=(Statistics.mean([enerFunc(x,simulParam) for x in X]))^2
         return 1/((simulParam[4]^2)*(N(X[1])))*(a-b)
+    end
+
+    function Neigs(r,pos,posLatt,delta = 1e-1)
+        center = posLatt[pos]
+        neigs = Array{CartesianIndex{length(size(posLatt))},1}()
+        for indx in CartesianIndices(size(posLatt))
+            if abs(norm(posLatt[indx] - center)-r) < delta
+                push!(neigs,indx)
+            end
+        end
+        return neigs
+    end
+
+
+    function PairCorrelation(x::IsingModel,r,posLatt,delta)
+        m2 = (sum(x.linearLatt)/N(x))^2
+        s = 0
+        for indx in CartesianIndices(size(posLatt))
+            neigs = Neigs(r,indx,posLatt,delta)
+            neigs = LinearIndices(size(posLatt))[neigs]
+            indx = LinearIndices(size(posLatt))[indx]
+            aux = x.linearLatt[indx]*prod(x.linearLatt[neigs])/length(neigs)
+            s += aux - m2
+        end
+        return s/N(x)
     end
 
     function Partition(s,energyIntervals,temp,metaParam)
@@ -180,41 +206,3 @@ module StatEnsemble
         return (x-(metaParam[1]^metaParam[2])*DOSInternalEnergy(s,energyIntervals,temp,metaParam)^2)/temp^2
     end
 end
-
-    #=
-
-    ########### Wang-Landau
-
-    function MagArray(energyIntervals,enerFunc,param;printLog=false)
-        m=ones(param[1],param[1])
-        neigLatt=Geometry.IndexLattice(m,Geometry.SquareLatticeNeighbors)
-        aux=[]
-        for i in 1:(length(energyIntervals)-1)
-            push!(aux,[])
-        end
-
-        for i in 1:param[1]
-            k=Auxiliar.Modl(i,2)
-            for j in k:2:param[1]
-                mag=abs(sum(m))
-                e=enerFunc(m,param,neigLatt)/(param[1]^2)
-                pos=Auxiliar.SearchSortedMod(energyIntervals,e)
-                push!(aux[pos],mag)
-                if printLog
-                    println(m)
-                    println(mag)
-                    println(e)
-                    println(pos)
-                end
-                Auxiliar.ChangeSpin!(m,[i,j])
-            end
-        end
-        fin=[Auxiliar.MeanMod(aux[i]) for i in 1:length(aux)]
-        return fin
-    end
-
-
-
-
-    
-=#

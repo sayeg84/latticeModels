@@ -172,6 +172,9 @@
     function N(x::IsingModel)
         return length(x.linearLatt)
     end
+    function Order(x::IsingModel)
+        return sum([length(y) for y in x.linearNeigLatt])/2
+    end
 
     #function RandomPosition(x::IsingModel)
     function RandomPosition(x::IsingModel)
@@ -212,6 +215,7 @@
     function Base.sizeof(x::IsingModel)
         return sizeof(x.linearLatt) + sizeof(x.linearNeigLatt) + sizeof(x.linearNeigSumLatt) + sizeof(x.shape)
     end
+    
 
     #   Testing
     #=

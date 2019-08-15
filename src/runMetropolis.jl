@@ -28,7 +28,7 @@ function ParseCommandline()
         "-G", "--Geometry" 
             help = "Lattice geometry"
             arg_type = String
-            default = "square"
+            default = "PeriodicSquare"
         "-E", "--EnerFunc" 
             help = "Energy function"
             arg_type = String
@@ -57,12 +57,8 @@ function ParseCommandline()
             help = "logarithm base 10 of total steps"
             arg_type = Float64
             default = 4.0
-        "-F", "--frequency"
-            help = "logarithm base 10 of saving frecuency. Must be less than steps"
-            arg_type = Float64
-            default = 2.0
-        "-A", "--averages"
-            help = "Number of averages performed"
+        "-A", "--Systems"
+            help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
             default = 2
     end
@@ -73,8 +69,7 @@ parsedArgs = ParseCommandline()
 
 algoParam = Array{Int64,1}([
     floor(10^parsedArgs["steps"]),
-    floor(10^parsedArgs["frequency"]),
-    parsedArgs["averages"]
+    parsedArgs["Systems"]
 ])
 
 simulParam = Array{Float64,1}([
@@ -87,7 +82,7 @@ simulParam = Array{Float64,1}([
 metaParam=[
     parsedArgs["Nlatt"],
     parsedArgs["dim"],
-    parsedArgs["Geometry"],
+    string(parsedArgs["Geometry"],"LatticeNeighbors"),
     parsedArgs["EnerFunc"],
     parsedArgs["Model"]
 ]
@@ -97,8 +92,11 @@ println("Initializing Lattice")
 println()
 # Initializing first lattice
 
-initSys  = getfield(Main,Symbol(metaParam[5]))(Lattices.PeriodicSquareLatticeNeighbors,metaParam[1],metaParam[2])
 
+
+neigFunc = getfield(Lattices,Symbol(metaParam[3]))
+sysFunc = getfield(Main,Symbol(metaParam[5])) 
+initSys  = [ sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]] 
 enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
 
 InOut.MakeAndEnterDirectories()
@@ -106,19 +104,19 @@ println()
 println("Making simulation")
 println()
 # making simulation
-for i in 1:algoParam[3]
+for i in 1:algoParam[2]
     println(i)
     global initSys
-    res = Algorithms.MetropolisOptimal(initSys,enerFunc,simulParam,algoParam)
+    res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
     name=string(simulParam,"_",i)
     mkdir(name)
     cd(name)
-    InOut.MetropolisAllOut(initSys,res[1],algoParam)
+    InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteSimulParamTable(simulParam)
     InOut.WriteMetaParamTable(metaParam)
-    InOut.WriteAdjMat(initSys)
-    initSys = copy(res[2])
+    InOut.WriteAdjMat(initSys[i])
+    initSys[i] = copy(res[2])
     cd("..")
 end
 InOut.ExitDirectories()
