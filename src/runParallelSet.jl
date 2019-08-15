@@ -73,15 +73,15 @@ metaParam=[
 
 #initializing parameters
 
-bArray = [0]
-jArray = [1]
-cArray = [0]
-tArray = range(0.1 , stop = 5 , length = 21)
+#bArray = [0]
+#jArray = [1]
+#cArray = [0]
+#tArray = range(0.1 , stop = 5 , length = 21)
 
-#bArray = range(-3.3,stop = -1.5,length = 31)
-#jArray = [2.0]
-#cArray = [0.8]
-#tArray = [0.5]
+bArray = range(-3.5,stop = 0.0,length = 41)
+jArray = [2.0]
+cArray = range(0.5,1.2,length = 31)
+tArray = [0.5]
 
 println()
 println("Initializing Lattice")

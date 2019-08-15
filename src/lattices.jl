@@ -1,5 +1,5 @@
 module Lattices
-    using Plots
+    #using Plots
     gr()
     """
         PeriodicSquareLatticeNeighbors(latt,pos)
@@ -557,6 +557,7 @@ module Lattices
             error("Dimension not supported")
         end  
     end
+    #=
     function PlotLattice(sizes,neigFunc,posFunc)
         println("Loading Packages")
         println("Done")
@@ -596,6 +597,7 @@ module Lattices
         Plots.savefig("../lattice.png")
         #display(p)
     end
+    =#
 end
     #=
     """
