@@ -39,28 +39,50 @@ function ParseCommandline()
 end
 parsedArgs = ParseCommandline()
 
-function NormalDistribution(x ; mu = 0 , sigma = 1)
-    return 1/sqrt(2*pi*sigma^2) * exp(-(x-mu)^2/(2*sigma^2))
+
+
+function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency,cut=1/2)
+    sys = copy(initSys)
+    M = Array{Float64,1}()
+    E = Array{Float64,1}()
+    enerFunc = enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
+    push!(M,StatEnsemble.Magnetization(sys))
+    push!(E,enerFunc(sys,simulParam))
+    for i in 1:length(changes)
+        if changes[i] != 0
+            ChangeSpin!(sys,changes[i])
+        end
+        if mod(i,frequency) == 0
+            push!(M,StatEnsemble.Magnetization(sys))
+            push!(E,enerFunc(sys,simulParam))
+        end
+    end
+    ncut = Int64(floor(length(M)*cut))
+    M = M[ncut:end]
+    m = Statistics.mean(M)
+    E = E[ncut:end]
+    e = Statistics.mean(E)
+    cv = Statistics.var(M,corrected=false) / ((simulParam[4]^2)*(N(initSys)))
+    xi = Statistics.var(E.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
+    return m,e,cv,xi
 end
 
-function MacroscopicVariables(name,model;cut=1/2)
-    M=[]
-    E=[]
-    CV=[]
-    Xi=[]
+function GetMacroscopicVariables(name;cut=1/2)
+    M = Array{Float64,1}()
+    E = Array{Float64,1}()
+    CV = Array{Float64,1}()
+    Xi = Array{Float64,1}()
     #getting list of directories
-    original=pwd()
+    original = pwd()
     cd(name)
-    dirs=InOut.Folders()
-    for simulParam in dirs
-        @time data = InOut.ReadSingleSimul(simulParam,parsedArgs["frequency"])
-        ncut=Int64(floor(length(data[1])*cut))
-        X=data[1][ncut:end]
-        simulParam = InOut.ParseArray(string(split(simulParam,"_")[1]))
-        push!(M,StatEnsemble.Magnetization(X))
-        push!(E,StatEnsemble.InternalEnergy(X,StatEnsemble.PenalizedEnergy,data[3]))
-        push!(CV,StatEnsemble.HeatCapacity(X,StatEnsemble.PenalizedEnergy,data[3]))
-        push!(Xi,StatEnsemble.MagneticSucep(X,data[3])) 
+    dirs = InOut.Folders()
+    for folder in dirs
+        @time data = InOut.ReadSingleSimul(folder)
+        res = MacroscopicVariables(data[1], data[2], data[3], data[4], parsedArgs["frequency"],cut)
+        push!(M,res[1])
+        push!(E,res[2])
+        push!(CV,res[3])
+        push!(Xi,res[4])
     end
     cd(original)
     return ( dirs , M , E , CV , Xi )
@@ -110,8 +132,7 @@ println()
 
 
 
-model = "cycle"
-@time vals = MacroscopicVariables(parsedArgs["path"],model,cut = parsedArgs["ncut"])
+@time vals = GetMacroscopicVariables(parsedArgs["path"],cut = parsedArgs["ncut"])
 vals = AverageMacroscopicVariables(vals)
 MacroscopicTables(parsedArgs["path"],vals)
 

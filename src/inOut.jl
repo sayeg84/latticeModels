@@ -185,6 +185,24 @@ module InOut
             end
         end
     end
+
+    function ReadSingleSimul(name)
+        original = pwd()
+        cd(name)
+        print("Reading ")
+        println(name)
+        simulParam = InOut.ReadSimulParamTable()
+        metaParam = InOut.ReadMetaParamTable()
+        algoParam = InOut.ReadAlgoParamTable()
+        adjMat = InOut.ReadAdjMat()
+        sys = DelimitedFiles.readdlm("initial.csv",',',Int8)
+        sys = reshape(sys,length(sys))
+        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
+        changes = DelimitedFiles.readdlm("changes.csv",',',Int32)
+        changes = reshape(changes,length(changes))
+        cd(original)
+        return sys, changes , metaParam, simulParam , algoParam, adjMat
+    end
     
     function ReadSingleSimul(name,frequency)
         original = pwd()

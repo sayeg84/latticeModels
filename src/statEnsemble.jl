@@ -62,6 +62,16 @@ module StatEnsemble
         return exp(-deltaener/simulParam[4])
     end
 
+
+    function Magnetization(sys::IsingModel,absolute=true)
+        if absolute
+            a = abs(sum(sys.linearLatt))
+        else
+            a = sum(sys.linearLatt)
+        end
+        return a/N(sys)
+    end
+    
     function Magnetization(X::Array{IsingModel,1},absolute=true)
         if absolute
             a = Statistics.mean([abs(sum(x.linearLatt)) for x in X])
@@ -70,6 +80,8 @@ module StatEnsemble
         end
         return a/N(X[1])
     end
+
+
     function MagneticSucep(X::Array{IsingModel,1},simulParam;absolute=true)
         if absolute
             a=Statistics.mean([abs(sum(x.linearLatt))^2 for x in X])
@@ -81,6 +93,10 @@ module StatEnsemble
         return 1/(simulParam[4]*(N(X[1])))*(a-b)
     end
 
+    function InternalEnergy(sys::IsingModel,enerFunc,simulParam)
+        a = enerFunc(sys,simulParam)
+        return a/N(X[1])
+    end
 
     function InternalEnergy(X::Array{IsingModel,1},enerFunc,simulParam)
         a = Statistics.mean([enerFunc(x,simulParam) for x in X])
@@ -93,6 +109,7 @@ module StatEnsemble
         b=(Statistics.mean([enerFunc(x,simulParam) for x in X]))^2
         return 1/((simulParam[4]^2)*(N(X[1])))*(a-b)
     end
+
 
     function Neigs(r,pos,posLatt,delta = 1e-1)
         center = posLatt[pos]
@@ -205,4 +222,6 @@ module StatEnsemble
         x=x/(Partition(s,energyIntervals,temp,metaParam)*(metaParam[1]^metaParam[2]))
         return (x-(metaParam[1]^metaParam[2])*DOSInternalEnergy(s,energyIntervals,temp,metaParam)^2)/temp^2
     end
+
+    
 end
