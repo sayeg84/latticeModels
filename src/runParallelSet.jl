@@ -7,7 +7,7 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-Distributed.addprocs(Sys.CPU_THREADS-1)
+Distributed.addprocs(3)
 
 
 @sync @everywhere include("inOut.jl")
@@ -90,9 +90,9 @@ println()
 
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
-let y  = sysFunc(neigFunc,metaParam[1],metaParam[2])
-    @sync @everywhere initSys = $y
-end
+
+initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]]
+
 
 let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
     @sync @everywhere enerFunc = $z
@@ -115,18 +115,19 @@ println()
     @sync @everywhere InOut.MakeAndEnterDirectories()
     @sync @distributed for i in 1:algoParam[2]
         global initSys
-        res = Algorithms.MetropolisFast(initSys,enerFunc,simulParam,algoParam)
+        res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
         name=string(simulParam,"_",i)
         mkdir(name)
         cd(name)
-        InOut.MetropolisAllOut(initSys,res[1],algoParam)
+        InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
         InOut.WriteAlgoParamTable(algoParam,"metropolis")
         InOut.WriteSimulParamTable(simulParam)
         InOut.WriteMetaParamTable(metaParam)
-        InOut.WriteAdjMat(initSys)
-        initSys = copy(res[2])
+        InOut.WriteAdjMat(initSys[i])
+        initSys[i] = copy(res[2])
         cd("..")
     end
     @everywhere InOut.ExitDirectories()
     
 end
+

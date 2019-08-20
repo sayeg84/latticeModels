@@ -54,7 +54,7 @@ end
 parsedArgs = ParseCommandline()
 
 algoParam=Array{Int64,1}([
-    floor(10^parsedArgs["steps"]),
+    floor(10^parsedArgs["steps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
     parsedArgs["Systems"]
 ])
 metaParam=[
@@ -75,16 +75,18 @@ neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
 initSys  = [ sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]] 
 enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
-#initializing parameters
-#bArray = [0]
-#jArray = [1]
-#cArray = [0]
-#tArray = range(0.1 , stop = 5 , length = 21)
 
-bArray = range(-3.3,stop = -1.5,length = 31)
-jArray = [2.0]
-cArray = [0.8]
-tArray = [0.5]
+#initializing parameters
+
+bArray = [0]
+jArray = [1]
+cArray = [0]
+tArray = range(0.1 , stop = 5 , length = 21)
+
+#bArray = range(-3.3,stop = -1.5,length = 31)
+#jArray = [2.0]
+#cArray = [0.8]
+#tArray = [0.5]
 
 
 println()
@@ -107,7 +109,7 @@ params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for 
     for i in 1:algoParam[2]
         println(i)
         global initSys
-        res = Algorithms.MetropolisFast(initSys[i],enerFunc,simulParam,algoParam)
+        res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
         name=string(simulParam,"_",i)
         mkdir(name)
         cd(name)

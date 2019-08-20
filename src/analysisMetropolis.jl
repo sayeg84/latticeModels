@@ -54,7 +54,7 @@ function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency,cut
         end
         if mod(i,frequency) == 0
             push!(M,StatEnsemble.Magnetization(sys))
-            push!(E,enerFunc(sys,simulParam))
+            push!(E,enerFunc(sys,simulParam)/N(initSys))
         end
     end
     ncut = Int64(floor(length(M)*cut))
@@ -62,8 +62,8 @@ function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency,cut
     m = Statistics.mean(M)
     E = E[ncut:end]
     e = Statistics.mean(E)
-    cv = Statistics.var(M,corrected=false) / ((simulParam[4]^2)*(N(initSys)))
-    xi = Statistics.var(E.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
+    xi = Statistics.var(M.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
+    cv = Statistics.var(E.*N(initSys),corrected=false) / ((simulParam[4]^2)*(N(initSys)))
     return m,e,cv,xi
 end
 
