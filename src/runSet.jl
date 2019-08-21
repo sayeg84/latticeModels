@@ -39,10 +39,10 @@ function ParseCommandline()
             help = "Lattice geometry"
             arg_type = String
             default = "SpinLattice"
-        "-S", "--steps"
-            help = "logarithm base 10 of total steps"
+        "-S", "--sweeps"
+            help = "logarithm base 10 of total sweeps"
             arg_type = Float64
-            default = 5.0
+            default = 3.5
             "-A", "--Systems"
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
@@ -54,7 +54,7 @@ end
 parsedArgs = ParseCommandline()
 
 algoParam=Array{Int64,1}([
-    floor(10^parsedArgs["steps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
+    floor(10^parsedArgs["sweeps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
     parsedArgs["Systems"]
 ])
 metaParam=[
@@ -102,6 +102,9 @@ params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for 
     println(current)
     println()
     InOut.MakeAndEnterDirectories()
+    InOut.WriteAlgoParamTable(algoParam,"metropolis")
+    InOut.WriteMetaParamTable(metaParam)
+    InOut.WriteAdjMat(initSys[1])
     println()
     println("Making simulation")
     println()
@@ -114,10 +117,7 @@ params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for 
         mkdir(name)
         cd(name)
         InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
-        InOut.WriteAlgoParamTable(algoParam,"metropolis")
         InOut.WriteSimulParamTable(simulParam)
-        InOut.WriteMetaParamTable(metaParam)
-        InOut.WriteAdjMat(initSys[i])
         initSys[i] = copy(res[2])
         cd("..")
     end

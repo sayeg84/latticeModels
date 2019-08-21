@@ -53,8 +53,8 @@ function ParseCommandline()
             help = "Temperature"
             arg_type = Float64
             default = 5.0
-        "-S", "--steps"
-            help = "logarithm base 10 of total steps"
+        "-S", "--sweeps"
+            help = "logarithm base 10 of total sweeps"
             arg_type = Float64
             default = 4.0
         "-A", "--Systems"
@@ -68,7 +68,7 @@ end
 parsedArgs = ParseCommandline()
 
 algoParam = Array{Int64,1}([
-    floor(10^parsedArgs["steps"]),
+    floor(10^parsedArgs["sweeps"]),
     parsedArgs["Systems"]
 ])
 
@@ -100,6 +100,9 @@ initSys  = [ sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]
 enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
 
 InOut.MakeAndEnterDirectories()
+InOut.WriteAlgoParamTable(algoParam,"metropolis")
+InOut.WriteMetaParamTable(metaParam)
+InOut.WriteAdjMat(initSys[1])
 println()
 println("Making simulation")
 println()
@@ -112,10 +115,7 @@ for i in 1:algoParam[2]
     mkdir(name)
     cd(name)
     InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
-    InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteSimulParamTable(simulParam)
-    InOut.WriteMetaParamTable(metaParam)
-    InOut.WriteAdjMat(initSys[i])
     initSys[i] = copy(res[2])
     cd("..")
 end

@@ -60,7 +60,6 @@ module InOut
     function ExitDirectories()
         cd("..")
         cd("..")
-        
         cd("src")
     end
 
@@ -188,13 +187,13 @@ module InOut
 
     function ReadSingleSimul(name)
         original = pwd()
+        metaParam = InOut.ReadMetaParamTable()
+        algoParam = InOut.ReadAlgoParamTable()
+        adjMat = InOut.ReadAdjMat()
         cd(name)
         print("Reading ")
         println(name)
         simulParam = InOut.ReadSimulParamTable()
-        metaParam = InOut.ReadMetaParamTable()
-        algoParam = InOut.ReadAlgoParamTable()
-        adjMat = InOut.ReadAdjMat()
         sys = DelimitedFiles.readdlm("initial.csv",',',Int8)
         sys = reshape(sys,length(sys))
         sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
