@@ -5,6 +5,8 @@ module Cycles
     import ..IsingModel
     import ..N
     import ..AdjMat
+    import ..EdgList
+    import ..ChangeSpin!
 
     "vectorize(mat) converts an n-dimensional array mat in a vector"
     function vectorizar(mat)
@@ -259,6 +261,11 @@ module Cycles
         end
         return σo, σc, σo-σc
     end
+    """
+        ciclos2(sys)
+
+        Auxiliar function to get cycles from IsingModel and 
+    """
     function ciclos2(sys)
         n = sys.shape[1]
         #println("hay ciclos")
@@ -275,17 +282,25 @@ module Cycles
     #TestSimilarity()
     
     using LightGraphs, LinearAlgebra
+    """
+        lgEdgesInCycles(x)
 
-    function lgEdgesInCycles(x)
+        Function to get number of edges in cycles using LightGraphs package
+    """
+    function lgEdgesInCycles(x::Union{IsingModel,LatticeGas})
         edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
         #withoutbrid = [e for e in edges(G) if ~(in(e,brid))]
         #G3 = induced_subgraph(G,withoutbrid)
-        return G.ne - length(brid)
+        return G.ne-length(brid)
     end
+    """
+        lgEdgesInCycles(x)
 
+        Function to get induced subgraph by vertex in cycles using LightGraphs package
+    """
     function lgCycles(x)
         edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
         a = AdjMat(edgList)
@@ -294,6 +309,128 @@ module Cycles
         withoutbrid = [e for e in edges(G) if ~(in(e,brid))]
         G3 = induced_subgraph(G,withoutbrid)
         return G3[1]
+    end
+
+    
+    ## New algorithm DFS-based
+    """
+        BridArray(edgList)
+
+        function to return an array of all the bridges of a graph with in edge list representation. Uses DFS-based algorithm
+    """
+    function BridArray(edgList)
+        global count = 0
+        n = length(edgList) 
+        visited = falses(n)
+        disc = [typemax(Int16) for i in 1:n]
+        low = [typemax(Int16) for i in 1:n]
+        parent = 0 * ones(Int16,n)
+        global brid = 0
+        global bridgeArray = Array{Array{Int16,1},1}()
+        for i in 1:n
+            if !visited[i]
+                DFS(i,visited,parent,low,disc,edgList)
+            end
+        end
+        return bridgeArray
+    end
+
+    function CycSubSys(x)
+        global count = 0
+        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x)]
+        n = N(x)
+        visited = falses(n)
+        disc = [typemax(Int16) for i in 1:n]
+        low = [typemax(Int16) for i in 1:n]
+        parent = 0 * ones(Int16,n)
+        global brid = 0
+        global bridgeArray = Array{Array{Int16,1},1}()
+        for i in 1:n
+            if !visited[i]
+                DFS2(i,visited,parent,low,disc,edgList)
+            end
+        end
+        adjMat = AdjMat(edgList)
+        for brid in bridgeArray
+            adjMat[brid[1],brid[2]] = 0
+            adjMat[brid[2],brid[1]] = 0
+        end
+        degs = sum(adjMat,dims=1)
+        y = copy(x)
+        for i in 1:n
+            if degs[i] <= 1 && x.linearLatt[i] == 1
+                ChangeSpin!(y,i)
+            end
+        end
+        return y
+    end
+    """
+        edgInCyc
+        
+        Function to return number of all edges in cycles. Uses DFS-based algorithm
+    """
+    function EdgInCyc(x)
+        global count = 0
+        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
+        n = N(x)
+        visited = falses(n)
+        disc = [typemax(Int16) for i in 1:n]
+        low = [typemax(Int16) for i in 1:n]
+        parent = 0 * ones(Int16,n)
+        global brid = 0
+        global bridgeArray = Array{Array{Int16,1},1}()
+        for i in 1:n
+            if !visited[i]
+                DFS(i,visited,parent,low,disc,edgList)
+            end
+        end
+        normal = Int64(sum([length(y) for y in edgList])/2)
+        return (normal-brid)
+    end
+
+    function DFS(i,visited,parent,low,disc,edgList)
+        global count
+        global brid
+        global bridgeArray
+        visited[i] = true
+        disc[i] = count
+        low[i] = count
+        count = count+1
+        for j in edgList[i]
+            if !visited[j]
+                parent[j] = i
+                DFS(j,visited,parent,low,disc,edgList)
+                low[i] = minimum([low[j],low[i]])
+                if low[j] > disc[i]
+                    #push!(bridgeArray,[i,j])
+                    brid = brid+1
+                end
+            elseif j != parent[i]
+                low[i] = minimum([low[i],disc[j]])
+            end
+        end
+    end
+    function DFS2(i,visited,parent,low,disc,edgList)
+        global count
+        global brid
+        global bridgeArray
+        visited[i] = true
+        disc[i] = count
+        low[i] = count
+        count = count+1
+        for j in edgList[i]
+            if !visited[j]
+                parent[j] = i
+                DFS2(j,visited,parent,low,disc,edgList)
+                low[i] = minimum([low[j],low[i]])
+                if low[j] > disc[i]
+                    push!(bridgeArray,[i,j])
+                    brid = brid+1
+                end
+            elseif j != parent[i]
+                low[i] = minimum([low[i],disc[j]])
+            end
+        end
     end
 
     using DelimitedFiles
@@ -323,18 +460,24 @@ module Cycles
         x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
         ciclos2(x)
         lgEdgesInCycles(x)
+        EdgInCyc(x)
         t1 = 0.0
         t2 = 0.0
+        t3 = 0.0
         for i in 1:iter
             x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
             t1 += @elapsed ciclos2(x)
             t2 += @elapsed lgEdgesInCycles(x)
+            t3 += @elapsed EdgInCyc(x)
         end
         print("Our algorithm: ")
         println(t1/iter)
         print("Their algorithm: ")
         println(t2/iter)
+        print("Internet algorithm: ")
+        println(t3/iter)
     end
+    
 
     function EdjListFromLatt(latt)
         s = size(latt)
@@ -343,49 +486,70 @@ module Cycles
         return edgList
     end
 
-    function TestSimilarity(n::Int64 = 16,iter = 100)
+    function TestSimilarity1(n::Int64 = 16,iter = 100)
         for i in 1:iter
             println(i)
             x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
             a = ciclos2(x)
-            #a = EdjListFromLatt(a)
             b = lgCycles(x)
             #b = b.fadjlist
-            if sum(a) == length(b.fadjlist)
+            if sum(a) == length(b.fadjlist) 
                 println("eureka")
             else
                 @show a
                 @show sum(a)
-                @show b.fadjlist                
+                @show b.fadjlist
                 @show length(b.fadjlist)
             end
         end
     end
+
+    function TestSimilarity2(n::Int64 = 16,iter = 100)
+        for i in 1:iter
+            println(i)
+            x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
+            b = lgEdgesInCycles(x)
+            c = EdgInCyc(x)
+            if b ==c
+                println("eureka")
+            else
+                @show b
+                @show c
+            end
+        end
+    end
+
+    #TestPerformance(60,1)
+    #TestSimilarity2(30,100)
     function TestComplexity(n::Int64 = 16,iter = 100)
         x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
         ciclos2(x)
         lgEdgesInCycles(x)
+        EdgInCyc(x)
         t1 = 0.0
         t2 = 0.0
+        t3 = 0.0
         for i in 1:iter
             x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
             t1 += @elapsed ciclos2(x)
             t2 += @elapsed lgEdgesInCycles(x)
+            t3 += @elapsed EdgInCyc(x)
         end
         t1 /= iter
         t2 /= iter
-        return t1,t2
+        t3 /= iter
+        return t1,t2 , t3
     end
     using DelimitedFiles
     function ComplexityData(Ns,iter = 100)
         open("../cyclesComplexity.csv","w") do io
-            write(io,"n,ours,LightGraphs\n")
+            write(io,"n,ours,LightGraphs,new\n")
             for n in Ns
                 println(n)
                 t = TestComplexity(n,iter)
-                write(io,"$n,$(t[1]),$(t[2])\n")
+                write(io,"$n,$(t[1]),$(t[2]),$(t[3])\n")
             end
         end
     end
-    #@time ComplexityData(2:50)
+    #@time ComplexityData(100,5)
 end

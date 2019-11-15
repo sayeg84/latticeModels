@@ -4,12 +4,17 @@ println()
 println("Importing libraries")
 println()
 
-using ArgParse, Statistics, Dates
+using  Distributed
+@everywhere using ArgParse, Statistics, Dates
 
-include("lattices.jl")
-include("algorithms.jl")
-include("inOut.jl")
 
+
+Distributed.addprocs(3)
+
+
+@sync @everywhere include("inOut.jl")
+@everywhere include("algorithms.jl")
+@everywhere include("lattices.jl")
 
 
 println()
@@ -20,7 +25,7 @@ function ParseCommandline()
 
     @add_arg_table s begin
         "-N", "--Nlatt" 
-            help = "Lattice size"
+            help = "Lattice side"
             arg_type = Int64
             default = 10
         "-D", "--dim" 
@@ -42,21 +47,24 @@ function ParseCommandline()
         "-S", "--sweeps"
             help = "logarithm base 10 of total sweeps"
             arg_type = Float64
-            default = 2.0
-            "-A", "--Systems"
+            default = 3.0
+        "-A", "--Systems"
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
-            default = 2
+            default = Sys.CPU_THREADS-1
     end
     return parse_args(s)
 end
 
 parsedArgs = ParseCommandline()
 
+
+
 algoParam=Array{Int64,1}([
-    floor(10^parsedArgs["sweeps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
+    floor(10^parsedArgs["sweeps"])*parsedArgs["Nlatt"]^parsedArgs["dim"],
     parsedArgs["Systems"]
 ])
+
 metaParam=[
     parsedArgs["Nlatt"],
     parsedArgs["dim"],
@@ -65,55 +73,63 @@ metaParam=[
     parsedArgs["Model"]
 ]
 
+#initializing parameters
 
+#bArray = [0]
+#jArray = [1]
+#cArray = [0]
+#tArray = range(1.1 , stop = 4 , length = 31)
+
+
+
+#bArray = range(-3.5,stop = 0.0,length = 41)
+bArray = [-1.0]
+jArray = [2.0]
+#cArray = range(0.5,1.2,length = 31)
+cArray = [0.9]
+tArray = [0.5]
 
 println()
 println("Initializing Lattice")
 println()
-# Initializing first lattice
+
+
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
-initSys  = [ sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]] 
-enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
 
-#initializing parameters
+initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]]
 
-bArray = [0]
-jArray = [1]
-cArray = [0]
-tArray = range(0.1 , stop = 5 , length = 21)
 
-#bArray = range(-3.3,stop = -1.5,length = 31)
-#jArray = [2.0]
-#cArray = [0.8]
-#tArray = [0.5]
+let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
+    @sync @everywhere enerFunc = $z
+end
 
+
+params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
 
 println()
 println("Running simulations")
 println()
 
-params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
-
-
-@time for simulParam in params
-    current="B, J, C, T = $(simulParam) "
-    println()
-    println(current)
-    println()
+@time @sync @distributed  for i in 1:length(params)
+    simulParam = params[i]
+    if myid()==procs()[end]
+        per = round((i-1)*100/length(params); digits= 2)
+        prog = "Progress: $(per) % "
+        current="Current: B, J, C, T = $(simulParam) "
+        println()
+        println(prog)
+        println(current)
+        println()
+    end
     InOut.MakeAndEnterDirectories()
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
-    println()
-    println("Making simulation")
-    println()
-    # making simulation
     for i in 1:algoParam[2]
-        println(i)
         global initSys
-        res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
-        name=string(simulParam,"_",i)
+        res = Algorithms.MetropolisFast(initSys[i],enerFunc,simulParam,algoParam)
+        name = string(simulParam,"_",i)
         mkdir(name)
         cd(name)
         InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
@@ -122,4 +138,5 @@ params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for 
         cd("..")
     end
     InOut.ExitDirectories()
-end    
+end
+

@@ -7,13 +7,13 @@ println("Importing libraries")
 println()
 
 include("statEnsemble.jl")
-include("auxiliar.jl")
 include("inOut.jl")
-include("geometry.jl")
-include("cyclesAta.jl")
-#=
+include("lattices.jl")
 
-Refactor all
+# importing function from lattice module
+
+
+
 
 using ArgParse, Statistics, PyPlot
 PyPlot.rc("text", usetex=true)
@@ -24,10 +24,14 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Dirname" 
+        "-D", "--Path" 
             help = "Directory path to make gif"
             arg_type = String
             required=true
+        "-F","--Freq"
+            help = "Frequency of plots"
+            arg_type = Int64
+            default = 100 
         "-X"
             help = "Whether or not to show box containing system"
             action = :store_true
@@ -40,6 +44,74 @@ end
 parsedArgs = ParseCommandline()
 original = pwd()
 
+dirs = InOut.Folders()
+splitedPath = splitpath(parsedArgs["Path"])
+afterpath = splitedPath[end]
+path = splitedPath[1]
+for i in 2:(length(splitedPath)-1)
+    global path
+    path = joinpath(path,splitedPath[i])
+end
+cd(path)
+simul = InOut.ReadSingleSimul(afterpath)
+sys = simul[1]
+changes = simul[2]
+sysArray = Array{typeof(sys),1}([copy(sys)])
+for i in 1:length(changes)
+    if changes[i] != 0
+        ChangeSpin!(sys,changes[i])
+    end
+    if mod(i,parsedArgs["Freq"]) == 0
+        push!(sysArray,copy(sys))
+    end
+end
+#cycArray = [Cycles.CycSubSys(x) for x in sysArray]
+
+
+function plotSystem(sys,c;zpos=0)
+    sizes = fill(sys.shape[1],sys.shape[2])
+    sizes = tuple(sizes...)
+    positions = Lattices.SquarePositionLattice(sizes)
+    positions = reshape(positions,length(positions))
+    ones = [i for i in 1:N(sys) if sys.linearLatt[i]==1]
+    xpositions = [positions[i][1] for i in ones ]
+    ypositions = [positions[i][2] for i in ones ]
+    PyPlot.scatter(xpositions,ypositions,s=140,color=c,zorder=zpos)
+    visited = falses(N(sys))
+    for i in 1:N(sys)
+        if sys.linearLatt[i] == 1
+            for j in sys.linearNeigLatt[i]
+                if sys.linearLatt[j]==1
+                    PyPlot.plot([positions[i][1],positions[j][1]],[positions[i][2],positions[j][2]],color=c,zorder=zpos-1)
+                end
+            end
+        end
+    end
+end
+cd(afterpath)
+if !(isdir("animPlots"))
+    mkdir("animPlots")
+end
+cd("animPlots")
+for i in 1:length(sysArray)
+    PyPlot.figure(figsize=(8,8))
+    plotSystem(sysArray[i],"k")
+    plotSystem(Cycles.CycSubSys(sysArray[i]),(0.6,0.4,0.8))
+    if parsedArgs["X"]
+        PyPlot.xticks([])
+        PyPlot.yticks([])
+    else
+        PyPlot.axis("off")
+    end
+    PyPlot.tight_layout()
+    PyPlot.savefig("$i.pdf")    
+end
+cd("..")
+cd("..")
+
+
+
+#=
 function MakeFiguresSequence(X,metaParam,algoParam)
     neigLatt = Geometry.BuildLattices(metaParam,"cycle")[2]
     for i in 1:length(X)

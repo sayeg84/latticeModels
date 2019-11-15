@@ -7,7 +7,9 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-Distributed.addprocs(3)
+
+
+Distributed.addprocs(Sys.CPU_THREADS-1)
 
 
 @sync @everywhere include("inOut.jl")
@@ -45,7 +47,7 @@ function ParseCommandline()
         "-S", "--sweeps"
             help = "logarithm base 10 of total sweeps"
             arg_type = Float64
-            default = 5.0
+            default = 3.0
         "-A", "--Systems"
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
@@ -73,15 +75,17 @@ metaParam=[
 
 #initializing parameters
 
-bArray = [0]
-jArray = [1]
-cArray = [0]
-tArray = range(0.1 , stop = 5 , length = 21)
+#bArray = [0]
+#jArray = [1]
+#cArray = [0]
+#tArray = range(1.1 , stop = 4 , length = 31)
 
-#bArray = range(-3.5,stop = 0.0,length = 41)
-#jArray = [2.0]
-#cArray = range(0.5,1.2,length = 31)
-#tArray = [0.5]
+tcenter = 0.5
+
+bArray = range(-3.5,stop = 0.0,length = 41)
+jArray = [2.0]
+cArray = [0.9]
+tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
 
 println()
 println("Initializing Lattice")
@@ -99,27 +103,33 @@ let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
 end
 
 
-params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray), i4 in 0:(length(tArray)-1)]
+params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i4 in 0:(length(tArray)-1), i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray)]
 
 println()
-println("Running simulations")
+println("Running backwards simulations")
 println()
 
-@time for s in params
-    simulParam = s
-    current="B, J, C, T = $(simulParam) "
-    println()
-    println(current)
-    println()
-    
-    @sync @everywhere InOut.MakeAndEnterDirectories()
+@time @sync @distributed  for i in 1:length(params)
+    simulParam = params[i]
+    if myid()==2
+        per = round((i-1)*100/length(params); digits= 2)
+        prog = "Progress: $(per) % "
+        current="Current: B, J, C, T = $(simulParam) "
+        println()
+        println(prog)
+        println(current)
+        println()
+    end
+    InOut.MakeAndEnterDirectories()
+    try mkdir("backwards") catch SystemError end
+    cd("backwards")
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
-    @sync @distributed for i in 1:algoParam[2]
+    for i in 1:algoParam[2]
         global initSys
-        res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
-        name=string(simulParam,"_",i)
+        res = Algorithms.MetropolisFast(initSys[i],enerFunc,simulParam,algoParam)
+        name = string(simulParam,"_",i)
         mkdir(name)
         cd(name)
         InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
@@ -127,7 +137,47 @@ println()
         initSys[i] = copy(res[2])
         cd("..")
     end
-    @everywhere InOut.ExitDirectories()
-    
+    cd("..")
+    InOut.ExitDirectories()
 end
 
+params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[i4]]) for i4 in 1:(length(tArray)), i1 in 1:length(bArray), i2 in 1:length(jArray), i3 in 1:length(cArray)]
+
+
+println()
+println("Running forwards simulations")
+println()
+
+
+
+@time @sync @distributed  for i in 1:length(params)
+    simulParam = params[i]
+    if myid()==2
+        per = round((i-1)*100/length(params); digits= 2)
+        prog = "Progress: $(per) % "
+        current="Current: B, J, C, T = $(simulParam) "
+        println()
+        println(prog)
+        println(current)
+        println()
+    end
+    InOut.MakeAndEnterDirectories()
+    try mkdir("forward") catch SystemError end
+    cd("forward")
+    InOut.WriteAlgoParamTable(algoParam,"metropolis")
+    InOut.WriteMetaParamTable(metaParam)
+    InOut.WriteAdjMat(initSys[1])
+    for i in 1:algoParam[2]
+        global initSys
+        res = Algorithms.MetropolisFast(initSys[i],enerFunc,simulParam,algoParam)
+        name = string(simulParam,"_",i)
+        mkdir(name)
+        cd(name)
+        InOut.MetropolisAllOut(initSys[i],res[1],algoParam)
+        InOut.WriteSimulParamTable(simulParam)
+        initSys[i] = copy(res[2])
+        cd("..")
+    end
+    cd("..")
+    InOut.ExitDirectories()
+end

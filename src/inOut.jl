@@ -52,6 +52,8 @@ module InOut
         cd(dest)
     end
 
+
+
     """
         ExitDirectories()
 
@@ -189,8 +191,8 @@ module InOut
         original = pwd()
         metaParam = InOut.ReadMetaParamTable()
         algoParam = InOut.ReadAlgoParamTable()
-        adjMat = InOut.ReadAdjMat()
-        cd(name)
+        adjMat = InOut.ReadAdjMat()  
+        cd(name)   
         print("Reading ")
         println(name)
         simulParam = InOut.ReadSimulParamTable()

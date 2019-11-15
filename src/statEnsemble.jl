@@ -9,6 +9,8 @@ module StatEnsemble
     import ..N
     import ..Cycles.lgEdgesInCycles
     import ..Cycles.ciclos2
+    import ..Cycles.EdgInCyc
+    import ..Cycles.CycSubSys
 
 
     using Statistics,LinearAlgebra
@@ -35,7 +37,7 @@ module StatEnsemble
         B=simulParam[1]
         J=simulParam[2]
         C=simulParam[3]
-        e = -B*sum(x.linearLatt) - J * sum(x.linearNeigSumLatt .* x.linearLatt ) /2 + C * lgEdgesInCycles(x)
+        e = -B*sum(x.linearLatt) - J * sum(x.linearNeigSumLatt .* x.linearLatt ) /2 + C * EdgInCyc(x)
         return e
     end
 
@@ -134,6 +136,19 @@ module StatEnsemble
             s += aux - m2
         end
         return s/N(x)
+    end
+
+    function AutoCorrelations(M,E,cut=1/2,dt=10)
+        res = []
+        n = length(M)
+        ncut = Int64(floor(n*cut))
+        T = 1:n
+        push!(res,collect(1:dt:ncut))
+        for var in [M,E]
+            corr = [sum([var[j]*var[j+i] for j in 1:dt:(n-i)])/(n-i+1) for i in 1:dt:ncut]
+            push!(res,corr)
+        end
+        return res
     end
 
     function Partition(s,energyIntervals,temp,metaParam)

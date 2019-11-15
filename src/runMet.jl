@@ -68,7 +68,7 @@ end
 parsedArgs = ParseCommandline()
 
 algoParam = Array{Int64,1}([
-    floor(10^parsedArgs["sweeps"]),
+    floor(10^parsedArgs["sweeps"])*parsedArgs["Nlatt"]^parsedArgs["dim"],
     parsedArgs["Systems"]
 ])
 
@@ -110,7 +110,7 @@ println()
 for i in 1:algoParam[2]
     println(i)
     global initSys
-    res = Algorithms.MetropolisOptimal(initSys[i],enerFunc,simulParam,algoParam)
+    res = Algorithms.MetropolisFast(initSys[i],enerFunc,simulParam,algoParam)
     name=string(simulParam,"_",i)
     mkdir(name)
     cd(name)
