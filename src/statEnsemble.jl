@@ -8,6 +8,7 @@ module StatEnsemble
     import ..ChangeSpin
     import ..N
     import ..Cycles.lgEdgesInCycles
+    import ..Cycles.lgNewCycles
     import ..Cycles.ciclos2
     import ..Cycles.EdgInCyc
     import ..Cycles.CycSubSys
@@ -39,6 +40,16 @@ module StatEnsemble
         C=simulParam[3]
         e = -B*sum(x.linearLatt) - J * sum(x.linearNeigSumLatt .* x.linearLatt ) /2 + C * EdgInCyc(x)
         return e
+    end
+
+    function ProbAta(ener,x::LatticeGas,pos::Integer,simulParam;printLog=false)
+        B=simulParam[1]
+        J=simulParam[2]
+        C=simulParam[3]
+        x2 =ChangeSpin(x,pos)
+        newcyc = lgNewCycles(x,x2)
+        deltae = -B-J*x.linearNeigSumLatt[pos] + 2*((B+J*x.linearNeigSumLatt[pos])*x.linearLatt[pos]) + C * newcyc
+        return exp(-big(deltae)/simulParam[4])
     end
 
 

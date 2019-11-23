@@ -6,9 +6,8 @@ println()
 
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
+
 cores = 6
-
-
 Distributed.addprocs(cores)
 
 
@@ -39,15 +38,15 @@ function ParseCommandline()
         "-E", "--EnerFunc" 
             help = "Energy function"
             arg_type = String
-            default = "NormalEnergy"
+            default = "PenalizedEnergy"
         "-M", "--Model" 
             help = "Lattice geometry"
             arg_type = String
-            default = "SpinLattice"
+            default = "LatticeGas"
         "-S", "--sweeps"
             help = "logarithm base 10 of total sweeps"
             arg_type = Float64
-            default = 3.0
+            default = 2.0
         "-A", "--Systems"
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
@@ -80,13 +79,14 @@ metaParam=[
 #cArray = [0]
 #tArray = range(1.1 , stop = 4 , length = 31)
 
-tcenter = 0.5
 
-#bArray = range(-3.5,stop = 0.0,length = 41)
-bArray = [-2.0]
+
+bArray = range(-3.5,stop = 0.0,length = 41)
+#bArray = [-3.0,-2.0,-1.0]
 jArray = [2.0]
-cArray = [0.9]
-tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
+cArray = range(0.9,1.8,length = 31)
+#cArray = [1.6]
+tArray = [0.5]
 
 println()
 println("Initializing Lattice")
@@ -107,7 +107,7 @@ end
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
 
 println()
-println("Running exotermic simulations")
+println("Running simulations")
 println()
 
 @time @sync @distributed  for i in 1:length(params)
@@ -123,62 +123,16 @@ println()
         println()
     end
     InOut.MakeAndEnterDirectories()
-    if ~(isdir("exotermic"))
-        try mkdir("exotermic") catch SystemError end
-    end
-    cd("exotermic")
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
-    res = Algorithms.MetropolisFast(initSys[nwork],enerFunc,simulParam,algoParam)
+    res = Algorithms.MetropolisNewAta(initSys[nwork],enerFunc,simulParam,algoParam)
     name = string(simulParam,"_",string(nwork))
     mkdir(name)
     cd(name)
     InOut.MetropolisAllOut(initSys[nwork],res[1],algoParam)
     InOut.WriteSimulParamTable(simulParam)
     initSys[nwork] = copy(res[2])
-    cd("..")
-    cd("..")
-    InOut.ExitDirectories()
-end
-
-
-
-
-params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 1:(length(tArray)) for i2 in 1:length(jArray)]
-
-println()
-println("Running endothermic simulations")
-println()
-
-@time @sync @distributed  for i in 1:length(params)
-    simulParam = params[i][1:4]
-    nwork = myid()-1
-    if nwork==1
-        per = round((i-1)*100*algoParam[2]/length(params); digits= 2)
-        prog = "Progress: $(per) % "
-        #current="Current: B, J, C, T = $(simulParam) "
-        println()
-        println(prog)
-        #println(current)
-        println()
-    end
-    InOut.MakeAndEnterDirectories()
-    if ~(isdir("endothermic"))
-        try mkdir("endothermic") catch SystemError end
-    end
-    cd("endothermic")
-    InOut.WriteAlgoParamTable(algoParam,"metropolis")
-    InOut.WriteMetaParamTable(metaParam)
-    InOut.WriteAdjMat(initSys[1])
-    res = Algorithms.MetropolisFast(initSys[nwork],enerFunc,simulParam,algoParam)
-    name = string(simulParam,"_",string(nwork))
-    mkdir(name)
-    cd(name)
-    InOut.MetropolisAllOut(initSys[nwork],res[1],algoParam)
-    InOut.WriteSimulParamTable(simulParam)
-    initSys[nwork] = copy(res[2])
-    cd("..")
     cd("..")
     InOut.ExitDirectories()
 end

@@ -10,6 +10,7 @@ module Algorithms
     import ..ChangeSpin!
     import ..N
     import ..StatEnsemble.Prob
+    import ..StatEnsemble.ProbAta
     import ..StatEnsemble.ProbOptimal
     import ..StatEnsemble.NormalEnergy
     import ..RandomPosition
@@ -35,6 +36,25 @@ module Algorithms
             prob = rand()
             if prob<acep
                 ChangeSpin!(sys,pos)
+                changes[i] = pos
+            else 
+                changes[i] = 0
+            end
+        end
+        return changes, sys
+    end
+
+    function MetropolisNewAta(initSys,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
+        sys = copy(initSys)
+        changes = zeros(Int32,algoParam[1])
+        ener = enerFunc(sys,simulParam)
+        for i in 1:algoParam[1]
+            pos = RandomPosition(sys)
+            acep = ProbAta(ener,sys,pos,simulParam)
+            prob = rand()
+            if prob<acep
+                ChangeSpin!(sys,pos)
+                ener = ener - log(acep)*simulParam[4]
                 changes[i] = pos
             else 
                 changes[i] = 0

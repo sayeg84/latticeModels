@@ -1,6 +1,6 @@
     using MappedArrays
 
-    function EdgList(adjMat)
+    function EdgList(adjMat::Array{T,2}) where {T<:Integer}
         n=size(adjMat)[1]
         A=Array{Array{Int64,1},1}()
         for i in 1:n
@@ -15,7 +15,7 @@
         return A
     end
 
-    function AdjMat(edgList)
+    function AdjMat(edgList::Array{Array{T,1},1}) where {T<:Integer}  
         M = zeros(Int8,length(edgList),length(edgList))
         for i in 1:length(edgList)
             M[i,edgList[i]] = ones(length(edgList[i]))

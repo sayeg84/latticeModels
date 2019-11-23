@@ -292,7 +292,7 @@ module Cycles
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
-        #withoutbrid = [e for e in edges(G) if ~(in(e,brid))]
+        #withoutbrid = [e for e in edges(G) if !(in(e,brid))]
         #G3 = induced_subgraph(G,withoutbrid)
         return G.ne-length(brid)
     end
@@ -306,9 +306,29 @@ module Cycles
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
-        withoutbrid = [e for e in edges(G) if ~(in(e,brid))]
+        withoutbrid = [e for e in edges(G) if !(in(e,brid))]
         G3 = induced_subgraph(G,withoutbrid)
         return G3[1]
+    end
+
+    """
+        lgEdgesInCycles(x)
+
+        Function to get induced subgraph by vertex in cycles using LightGraphs package
+    """
+    function lgNewCycles(x1,x2)
+        edgList = [[y for y in x1.linearNeigLatt[pos] if x1.linearLatt[y]==1 && x1.linearLatt[pos]==1] for pos in 1:N(x1) ]
+        a = AdjMat(edgList)
+        G = Graph(a)
+        brid = bridges(G)
+        withoutbrid1 = [e for e in edges(G) if !(in(e,brid))]
+        edgList = [[y for y in x2.linearNeigLatt[pos] if x2.linearLatt[y]==1 && x2.linearLatt[pos]==1] for pos in 1:N(x1) ]
+        a = AdjMat(edgList)
+        G = Graph(a)
+        brid = bridges(G)
+        withoutbrid2 = [e for e in edges(G) if !(in(e,brid))]
+        newCycles = [e for e in withoutbrid2 if !(in(e,withoutbrid1))]
+        return length(newCycles)
     end
 
     
@@ -365,7 +385,7 @@ module Cycles
         return y
     end
     """
-        edgInCyc
+        EdgInCyc
         
         Function to return number of all edges in cycles. Uses DFS-based algorithm
     """

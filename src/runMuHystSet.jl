@@ -6,8 +6,8 @@ println()
 
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
-cores = 6
 
+cores = 3
 
 Distributed.addprocs(cores)
 
@@ -80,13 +80,11 @@ metaParam=[
 #cArray = [0]
 #tArray = range(1.1 , stop = 4 , length = 31)
 
-tcenter = 0.5
-
-#bArray = range(-3.5,stop = 0.0,length = 41)
-bArray = [-2.0]
+bArray = range(-3.5,stop = 0.0,length = 41)
 jArray = [2.0]
 cArray = [0.9]
-tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
+tArray = [0.5]
+#tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
 
 println()
 println("Initializing Lattice")
@@ -107,7 +105,7 @@ end
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
 
 println()
-println("Running exotermic simulations")
+println("Running mu-increasing simulations")
 println()
 
 @time @sync @distributed  for i in 1:length(params)
@@ -123,10 +121,10 @@ println()
         println()
     end
     InOut.MakeAndEnterDirectories()
-    if ~(isdir("exotermic"))
-        try mkdir("exotermic") catch SystemError end
+    if ~(isdir("mu-increasing"))
+        try mkdir("mu-increasing") catch SystemError end
     end
-    cd("exotermic")
+    cd("mu-increasing")
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
@@ -143,12 +141,16 @@ println()
 end
 
 
+println()
+println("Running forwards simulations")
+println()
 
 
-params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 1:(length(tArray)) for i2 in 1:length(jArray)]
+
+params=[Array{Float64,1}([bArray[end-i1],jArray[i2],cArray[i3],tArray[end-i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 0:(length(bArray)-1) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
 
 println()
-println("Running endothermic simulations")
+println("Running simulations")
 println()
 
 @time @sync @distributed  for i in 1:length(params)
@@ -164,10 +166,10 @@ println()
         println()
     end
     InOut.MakeAndEnterDirectories()
-    if ~(isdir("endothermic"))
-        try mkdir("endothermic") catch SystemError end
+    if ~(isdir("mu-decreasing"))
+        try mkdir("mu-decreasing") catch SystemError end
     end
-    cd("endothermic")
+    cd("mu-decreasing")
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
