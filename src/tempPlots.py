@@ -13,13 +13,14 @@ os.chdir(args.path)
 df = pd.read_csv("Macroscopic.csv")
 df = df.sort_values(by="kT")
 var = [["M","E"],["Xi","CV"]]
+varLabel = [[r"$\rho $",r"$U / N$"],[r"$\chi$",r"$C_v /N$"]]
 fig, axs  = plt.subplots(nrows=2,ncols=2,sharex = True,figsize=(12,8))
 
 for i in range(2):
     for j in range(2):
         if i==1:
             axs[i][j].set_xlabel("kT")
-        axs[i][j].set_ylabel(var[i][j])
+        axs[i][j].set_ylabel(varLabel[i][j])
         try:
             axs[i][j].errorbar(df["kT"].tolist(),df[var[i][j]].tolist(),yerr = df["Msigma"].tolist())
         except KeyError:

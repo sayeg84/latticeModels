@@ -34,7 +34,7 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Dirname" 
+        "-D", "--path" 
             help = "Directory path to analyse set"
             arg_type = String
             required=true
@@ -78,7 +78,7 @@ function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency)
 end
 
 
-splitedPath = splitpath(parsedArgs["Dirname"])
+splitedPath = splitpath(parsedArgs["path"])
 afterpath = splitedPath[end]
 path=splitedPath[1]
 for i in 2:(length(splitedPath)-1)
@@ -578,8 +578,8 @@ println()
 println("Making Analysis")
 println()
 
-data = InOut.ReadSingleSimul(parsedArgs["Dirname"])
-cd(parsedArgs["Dirname"])
+data = InOut.ReadSingleSimul(parsedArgs["path"])
+cd(parsedArgs["path"])
 ThermalizationPlots(data[1],"cycle",data[2],data[3],data[4])
 cd(original)
 =#

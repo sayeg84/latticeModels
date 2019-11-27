@@ -34,7 +34,7 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Dirname" 
+        "-D", "--path" 
             help = "Directory path to analyse set"
             arg_type = String
             required=true
@@ -78,7 +78,7 @@ function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency)
 end
 
 dirs = InOut.Folders()
-splitedPath = splitpath(parsedArgs["Dirname"])
+splitedPath = splitpath(parsedArgs["path"])
 afterpath = splitedPath[end]
 path = splitedPath[1]
 for i in 2:(length(splitedPath)-1)
@@ -96,7 +96,7 @@ for path in simils
     push!(Ms,copy(M))
     push!(Es,copy(E))
 end
-cd(original)
+
 open("$(split(afterpath,"_")[1])_chains.csv","w") do io
     for i in 1:(length(simils)-1)
         write(io,string("M",i,","))

@@ -21,7 +21,7 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Dirname" 
+        "-D", "--path" 
             help = "Directory path to analyse set"
             arg_type = String
             required=true
@@ -75,8 +75,8 @@ println()
 
 model = "normal"
 tempArray = range(0.1,5,length=50)
-vals = MacroscopicVariables(parsedArgs["Dirname"],model,tempArray)
-MacroscopicTables(parsedArgs["Dirname"],tempArray,vals)
+vals = MacroscopicVariables(parsedArgs["path"],model,tempArray)
+MacroscopicTables(parsedArgs["path"],tempArray,vals)
 
 
 

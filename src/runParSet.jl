@@ -7,7 +7,7 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-cores = 3
+cores = 4
 Distributed.addprocs(cores)
 
 
@@ -96,7 +96,7 @@ println()
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
 
-initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]]
+initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:cores]
 
 
 let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
@@ -114,7 +114,7 @@ println()
     simulParam = params[i][1:4]
     nwork = myid()-1
     if nwork==1
-        per = round((i-1)*100*algoParam[2]/length(params); digits= 2)
+        per = round((i-1)*100*cores/length(params); digits= 2)
         prog = "Progress: $(per) % "
         #current="Current: B, J, C, T = $(simulParam) "
         println()
@@ -132,7 +132,8 @@ println()
     cd(name)
     InOut.MetropolisAllOut(initSys[nwork],res[1],algoParam)
     InOut.WriteSimulParamTable(simulParam)
-    initSys[nwork] = copy(res[2])
+    #initSys[nwork] = sysFunc(neigFunc,metaParam[1],metaParam[2])  
+    initSys[nwork] = copy(res[2])  
     cd("..")
     InOut.ExitDirectories()
 end

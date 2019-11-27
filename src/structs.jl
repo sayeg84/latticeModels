@@ -30,7 +30,6 @@
         Construct to store an ising model of -1  and +1 spins
     """
 
-
     struct SpinLattice
         linearLatt::Array{Int8,1}
         linearNeigLatt::Array{Array{Int32,1},1}
@@ -40,7 +39,8 @@
         function SpinLattice(neigFunc::Function,l::Integer,d::Integer)
             sizes = fill(l,d)
             sizes = tuple(sizes...)
-            latt = rand(Array{Int8}([-1,1]),sizes)
+            #latt = rand(Array{Int8}([-1,1]),sizes)
+            latt = ones(sizes)
             neigLatt = Array{Array{CartesianIndex{length(sizes)},1},length(sizes)}(undef,sizes)
             for pos in CartesianIndices(sizes)
                 neigLatt[pos] = neigFunc(latt,pos)
@@ -58,7 +58,7 @@
             new(linearLatt,linearNeigLatt,linearNeigSumLatt,(l,d))
         end
         
-        function SpinLattice(adjMat)
+        function SpinLattice(adjMat::Array{T,2}) where {T<:Integer}
             if size(adjMat)[1] != size(adjMat)[2]
                 return error("Lattice and adjacency matrix must match")
             end
@@ -68,7 +68,7 @@
             new(linearLatt,linearNeigLatt,linearNeigSumLatt,(size(adjMat)[1],1))
         end
         
-        function SpinLattice(latt,adjMat)
+        function SpinLattice(latt,adjMat::Array{T,2}) where {T<:Integer}
             if length(latt) != size(adjMat)[1] 
                 return error("Lattice and adjacency matrix must match")
             elseif size(adjMat)[1] != size(adjMat)[2]
@@ -268,4 +268,93 @@
     @show a.linearNeigSumLatt[1]
 =#
 
-  
+
+
+
+
+### Legacy struct
+
+#=
+
+    """
+        SpinLattice
+
+        Construct to store an ising model of -1  and +1 spins
+    """
+
+
+    struct SpinLattice
+        latt::AbstractArray
+        neigLatt::AbstractArray 
+        neigSumLatt::ReadonlyMappedArray
+        linearLatt::Array{Int8,1}
+        linearNeigLatt::Array{Array{Int64,1},1}
+        linearNeigSumLatt::ReadonlyMappedArray
+        
+        
+        function SpinLattice(neigFunc::Function,l::Int64,d::Int64)
+            sizes = fill(l,d)
+            sizes = tuple(sizes...)
+            latt = rand(Array{Int8}([-1,1]),sizes)
+            neigLatt = Array{Array{CartesianIndex{length(sizes)},1},length(sizes)}(undef,sizes)
+            for pos in CartesianIndices(sizes)
+                neigLatt[pos] = neigFunc(latt,pos)
+            end
+            neigSumLatt = mappedarray(x -> sum(latt[x]),neigLatt) 
+            linearLatt = reshape(latt,prod(sizes))
+            linearNeigLatt = Array{Array{Int64,1},length(sizes)}(undef,sizes)
+            aux = LinearIndices(sizes)
+            for pos in CartesianIndices(sizes)
+                linearNeigLatt[pos] = aux[neigLatt[pos]]
+            end
+            linearNeigLatt = reshape(linearNeigLatt,prod(sizes))
+            linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
+            new(latt,neigLatt,neigSumLatt,linearLatt,linearNeigLatt,linearNeigSumLatt)
+        end
+        
+        function SpinLattice(adjMat::Array{Int64,2})
+            if size(adjMat)[1] != size(adjMat)[2]
+                return error("Lattice and adjacency matrix must match")
+            end
+            linearLatt = rand(Array{Int8}([-1,1]),size(adjMat)[1])
+            linearNeigLatt = EdgList(adjMat)
+            linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
+            latt = linearLatt
+            neigLatt = linearNeigLatt
+            neigSumLatt = mappedarray(x -> sum(latt[x]),neigLatt) 
+            new(latt,neigLatt,neigSumLatt,linearLatt,linearNeigLatt,linearNeigSumLatt)
+        end
+        
+        function SpinLattice(latt::Array{Int64,1},adjMat::Array{Int64,2})
+            if length(latt) != size(adjMat)[1] 
+                return error("Lattice and adjacency matrix must match")
+            elseif size(adjMat)[1] != size(adjMat)[2]
+                return error("Lattice and adjacency matrix must match")
+            end
+            linearLatt = copy(latt)
+            linearNeigLatt = EdgList(adjMat)
+            linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
+            latt = linearLatt
+            neigLatt = linearNeigLatt
+            neigSumLatt = mappedarray(x -> sum(latt[x]),neigLatt) 
+            new(latt,neigLatt,neigSumLatt,linearLatt,linearNeigLatt,linearNeigSumLatt)
+        end
+    
+        function SpinLattice(latt::AbstractArray,neigLatt::AbstractArray)
+            sizes=size(latt)
+            neigSumLatt = mappedarray(x -> sum(latt[x]),neigLatt) 
+            linearLatt = reshape(latt,prod(sizes))
+            linearNeigLatt = Array{Array{Int64,1},length(sizes)}(undef,sizes)
+            aux = LinearIndices(sizes)
+            for pos in CartesianIndices(sizes)
+                linearNeigLatt[pos] = aux[neigLatt[pos]]
+            end
+            linearNeigLatt = reshape(linearNeigLatt,prod(sizes))
+            linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
+            new(latt,neigLatt,neigSumLatt,linearLatt,linearNeigLatt,linearNeigSumLatt)
+        end
+        
+    end
+
+
+=#

@@ -173,7 +173,7 @@ def groupedPlots(color2,colorbar="double"):
 
     else:
         print("Error: color bar not supported")
-    plt.savefig("mu-C.png",dpi=300)
+    plt.savefig("mu-CHyst.png",dpi=300)
 
 groupedPlots(cm.terrain,"single")
 

@@ -7,7 +7,7 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-cores = 6
+cores = Sys.CPU_THREADS-1
 Distributed.addprocs(cores)
 
 

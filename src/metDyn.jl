@@ -24,11 +24,11 @@ function ParseCommandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "-D", "--Path" 
+        "-D", "--path" 
             help = "Directory path to make gif"
             arg_type = String
             required=true
-        "-F","--Freq"
+        "-F","--freq"
             help = "Frequency of plots"
             arg_type = Int64
             default = 100 
@@ -165,8 +165,8 @@ function MakeFiguresSequence(X,metaParam,algoParam)
 end
 
 
-data = InOut.ReadSingleSimul(parsedArgs["Dirname"])
-cd(parsedArgs["Dirname"])
+data = InOut.ReadSingleSimul(parsedArgs["path"])
+cd(parsedArgs["path"])
 if ~isdir("plots")
     mkdir("plots")
 end
