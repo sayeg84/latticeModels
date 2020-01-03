@@ -81,12 +81,13 @@ metaParam=[
 
 
 
-bArray = range(-3.5,stop = 0.0,length = 41)
-#bArray = [-3.0,-2.0,-1.0]
-jArray = [2.0]
+#bArray = range(-3.5,stop = 0.0,length = 41)
+bArray = [-9.0]
+jArray = [4.0]
 #cArray = range(0.5,1.2,length = 31)
-cArray = [0.9]
-tArray = [0.5]
+cArray = [0.0]
+#tArray = [1.0]
+tArray = range(0.1,10.0,length = 41)
 
 println()
 println("Initializing Lattice")
@@ -126,7 +127,7 @@ println()
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
-    res = Algorithms.MetropolisFast(initSys[nwork],enerFunc,simulParam,algoParam)
+    res = Algorithms.MetropolisOptimal(initSys[nwork],enerFunc,simulParam,algoParam)
     name = string(simulParam,"_",string(nwork))
     mkdir(name)
     cd(name)

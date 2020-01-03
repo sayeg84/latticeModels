@@ -83,7 +83,7 @@ metaParam=[
 tcenter = 0.5
 
 #bArray = range(-3.5,stop = 0.0,length = 41)
-bArray = [-2.0]
+bArray = [-3.3]
 jArray = [2.0]
 cArray = [0.9]
 tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
@@ -123,10 +123,10 @@ println()
         println()
     end
     InOut.MakeAndEnterDirectories()
-    if ~(isdir("exotermic"))
-        try mkdir("exotermic") catch SystemError end
+    if ~(isdir("exothermic"))
+        try mkdir("exothermic") catch SystemError end
     end
-    cd("exotermic")
+    cd("exothermic")
     InOut.WriteAlgoParamTable(algoParam,"metropolis")
     InOut.WriteMetaParamTable(metaParam)
     InOut.WriteAdjMat(initSys[1])
