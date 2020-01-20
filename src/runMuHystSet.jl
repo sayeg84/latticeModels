@@ -7,7 +7,7 @@ println()
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
 
-cores = 4
+cores = Sys.CPU_THREADS-1
 Distributed.addprocs(cores)
 
 
@@ -51,6 +51,18 @@ function ParseCommandline()
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
             default = cores
+        "-T","--temp"
+            help = "value of temperature"
+            arg_type = Float64
+            default = 0.5
+        "-J","--jconst"
+            help = "value of J constant"
+            arg_type = Float64
+            default = 0.5
+        "-C","--cconst"
+            help = "value of C constant"
+            arg_type = Float64
+            default = 0.5
     end
     return parse_args(s)
 end
@@ -79,11 +91,11 @@ metaParam=[
 #cArray = [0]
 #tArray = range(1.1 , stop = 4 , length = 31)
 
-bArray = range(-3.5,stop = 0.0,length = 41)
-jArray = [2.0]
-cArray = [0.9]
-tArray = [0.5]
-#tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
+bArray = range(-3.5,stop = 0.0,length = 21)
+jArray = [parsedArgs["jconst"]]
+cArray = [parsedArgs["cconst"]]
+tArray = [parsedArgs["temp"]]
+
 
 println()
 println("Initializing Lattice")
@@ -91,8 +103,7 @@ println()
 
 
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
-sysFunc = getfield(Main,Symbol(metaParam[5])) 
-
+sysFunc = getfield(Main,Symbol(metaParam[5]))
 initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:cores]
 
 

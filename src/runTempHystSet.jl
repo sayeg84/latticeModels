@@ -6,9 +6,8 @@ println()
 
 using  Distributed
 @everywhere using ArgParse, Statistics, Dates
-cores = 6
 
-
+cores = Sys.CPU_THREADS-1
 Distributed.addprocs(cores)
 
 
@@ -52,6 +51,22 @@ function ParseCommandline()
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
             default = cores
+        "-B","--bconst"
+            help = "value of B constant"
+            arg_type = Float64
+            default = 0.5
+        "-J","--jconst"
+            help = "value of J constant"
+            arg_type = Float64
+            default = 0.5
+        "-C","--cconst"
+            help = "value of C constant"
+            arg_type = Float64
+            default = 0.5
+        "-T","--temp"
+            help = "value of center temperature"
+            arg_type = Float64
+            default = 0.5
     end
     return parse_args(s)
 end
@@ -75,27 +90,19 @@ metaParam=[
 
 #initializing parameters
 
-#bArray = [0]
-#jArray = [1]
-#cArray = [0]
-#tArray = range(1.1 , stop = 4 , length = 31)
+bArray = [parsedArgs["bconst"]]
+jArray = [parsedArgs["jconst"]]
+cArray = [parsedArgs["cconst"]]
 
-tcenter = 0.5
-
-#bArray = range(-3.5,stop = 0.0,length = 41)
-bArray = [-3.3]
-jArray = [2.0]
-cArray = [0.9]
+tcenter = parsedArgs["bconst"]
 tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
 
 println()
 println("Initializing Lattice")
 println()
 
-
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
-
 initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]]
 
 
