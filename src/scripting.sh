@@ -1,11 +1,12 @@
-
-
 sizes=(8 10 12 16 20 26 32)
-#sizes=(16)
-#for si in "${sizes[@]}"  ; do
-#    julia runTempHystSet.jl -N $si -A 15 -M LatticeGas -E PenalizedEnergy -S #2.5 
-#    sleep 60
-#done
+mus=(-0.5  -2.0 -10.0 )
+#sizes=(16)                                                                                                                                                                            
+for si in "${sizes[@]}"  ; do
+    for mu in "${mus[@]}" ; do
+       julia runTempHystSet.jl -N $si -A 10 -M LatticeGas -E PenalizedEnergy -S 2.5 -T 2.3 -B $mu -C 0.9
+       sleep 60
+    done
+done
 for folder in ../outputs/*/ ; do
     echo $folder
     if [[ -d "$folder/endothermic" ]]
@@ -25,4 +26,7 @@ for folder in ../outputs/*/ ; do
     fi
 done
 tar cvfz simuls.tar.gz ../outputs
+
+
+
 

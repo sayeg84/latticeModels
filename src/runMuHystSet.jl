@@ -58,11 +58,11 @@ function ParseCommandline()
         "-J","--jconst"
             help = "value of J constant"
             arg_type = Float64
-            default = 0.5
+            default = 2.0
         "-C","--cconst"
             help = "value of C constant"
             arg_type = Float64
-            default = 0.5
+            default = 0.9
     end
     return parse_args(s)
 end
