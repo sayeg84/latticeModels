@@ -1,12 +1,18 @@
 sizes=(8 10 12 16 20 26 32)
 mus=(-0.5  -2.0 -10.0 )
+temps = (0.2 0.5 0.8 1.1 1.4 1.7 2.0 2.3 2.6 2.9)
 #sizes=(16)                                                                                                                                                                            
 for si in "${sizes[@]}"  ; do
     for mu in "${mus[@]}" ; do
-       julia runTempHystSet.jl -N $si -A 10 -M LatticeGas -E PenalizedEnergy -S 2.5 -T 2.3 -B $mu -C 0.9
+       julia runTempHystSet.jl -N $si -A 10 -M LatticeGas -E  PenalizedEnergy -S 2.5 -T 2.3 -B $mu -C 0.9
        sleep 60
     done
+    for te in "${temps[@]}"  ; do
+        julia runMuHystSet.jl -N $si -A 10 -M LatticeGas -E  PenalizedEnergy -S 2.5 -T $te -C 0.9
+        sleep 60
+    done
 done
+
 for folder in ../outputs/*/ ; do
     echo $folder
     if [[ -d "$folder/endothermic" ]]

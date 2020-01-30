@@ -150,8 +150,6 @@ println()
 end
 
 
-
-
 params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 1:(length(tArray)) for i2 in 1:length(jArray)]
 
 println()
