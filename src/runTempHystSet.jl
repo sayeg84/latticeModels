@@ -94,7 +94,7 @@ bArray = [parsedArgs["bconst"]]
 jArray = [parsedArgs["jconst"]]
 cArray = [parsedArgs["cconst"]]
 
-tcenter = parsedArgs["bconst"]
+tcenter = parsedArgs["temp"]
 tArray = range(tcenter/2, stop = tcenter*3/2, length = 31)
 
 println()
@@ -103,7 +103,7 @@ println()
 
 neigFunc = getfield(Lattices,Symbol(metaParam[3]))
 sysFunc = getfield(Main,Symbol(metaParam[5])) 
-initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:algoParam[2]]
+initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:cores]
 
 
 let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
