@@ -13,9 +13,62 @@ parser = argparse.ArgumentParser(description = "Make macroscopic variables plots
 parser.add_argument("--path", type = str, required = True)
 args = parser.parse_args()
 os.chdir(args.path)
+c1 = "forestgreen"
+c2 = "mediumorchid"
+al = 0.6
+def arrowPlot(axes,xs,ys,inverse = False,f=4,color="k"):
+    if inverse:
+         xs = [xs[-(i+1)] for i in range(len(xs))]
+         ys = [ys[-(i+1)] for i in range(len(ys))]
+    for i in range(len(xs)-1):
+        if i % f ==1:
+            axes.annotate("",xy=(xs[i+1],ys[i+1]),xytext=(xs[i],ys[i]),arrowprops=dict(arrowstyle="-|>,head_width=0.5,head_length=1", color = color,alpha=al))
+        else:
+            axes.plot([xs[i],xs[i+1]],[ys[i],ys[i+1]],color = color,alpha=al)
 
 
+df = pd.read_csv("mu-increasing/Macroscopic.csv")
+df = df.sort_values(by="Mu")
+var = [["M","E"],["Xi","CV"]]
+varLabel = [[r"$\rho $",r"$U / N$"],[r"$\chi$",r"$C_v /N$"]]
+fig, axs  = plt.subplots(nrows=2,ncols=2,sharex = True,figsize=(12,8))
+
+fig.suptitle("kT = {0}, J = {1}, C = {2}".format(df["kT"].to_list()[0],df["J"].to_list()[0],df["C"].to_list()[0]),fontsize=24)
+
+for i in range(2):
+    for j in range(2):
+        if i==1:
+            axs[i][j].set_xlabel(r"$\mu$")
+        axs[i][j].set_ylabel(varLabel[i][j])
+        try:
+            axs[i][j].errorbar(df["Mu"].tolist(),df[var[i][j]].tolist(),yerr = df["Msigma"].tolist(),color = c1,alpha=al)
+        except KeyError:
+            print("no "+ var[i][j] +" STD")
+        arrowPlot(axs[i][j],df["Mu"].tolist(),df[var[i][j]].tolist(),inverse=True,f=int(df["Mu"].shape[0]/5),color = c1)
+        #axs[i][j].scatter(df["kT"].tolist(),df[var[i][j]].tolist())
+
+df = pd.read_csv("mu-decreasing/Macroscopic.csv")
+df = df.sort_values(by="Mu")
+
+for i in range(2):
+    for j in range(2):
+        if i==1:
+            axs[i][j].set_xlabel(r"$\mu$")
+        axs[i][j].set_ylabel(varLabel[i][j])
+        try:
+            axs[i][j].errorbar(df["Mu"].tolist(),df[var[i][j]].tolist(),yerr = df["Msigma"].tolist(),color = c2,alpha=al)
+        except KeyError:
+            print("no "+ var[i][j] +" STD")
+        #axs[i][j].plot(df["Mu"].tolist(),df[var[i][j]].tolist())
+        #axs[i][j].scatter(df["Mu"].tolist(),df[var[i][j]].tolist())
+        arrowPlot(axs[i][j],df["Mu"].tolist(),df[var[i][j]].tolist(),f=int(df["Mu"].shape[0]/5),color = c2)
+        axs[i][j].grid()
+#plt.tight_layout()
+plt.savefig("mu-CHyst.png",dpi=300)
+
+"""
 df1 = pd.read_csv("mu-increasing/Macroscopic.csv")
+
 mus = sorted(list(set(df1["Mu"].tolist())))
 cs = sorted(list(set(df1["C"].tolist())))
 
@@ -42,17 +95,6 @@ mags2=[[df2[df2["Mu"]==mus[i]][df2["C"]==cs[j]]["Msigma"].values[0] for i in ran
 eners2=[[df2[df2["Mu"]==mus[i]][df2["C"]==cs[j]]["Esigma"].values[0] for i in range(len(mus))] for j in range(len(cs))]
 cvs2=[[df2[df2["Mu"]==mus[i]][df2["C"]==cs[j]]["CVsigma"].values[0] for i in range(len(mus))] for j in range(len(cs))]
 chis2=[[df2[df2["Mu"]==mus[i]][df2["C"]==cs[j]]["Xisigma"].values[0] for i in range(len(mus))] for j in range(len(cs))]
-
-
-def arrowPlot(axes,xs,ys,inverse = False,f=4,color="k"):
-    if inverse:
-         xs = [xs[-(i+1)] for i in range(len(xs))]
-         ys = [ys[-(i+1)] for i in range(len(ys))]
-    for i in range(len(xs)-1):
-        if i % f ==0:
-            axes.arrow(xs[i],ys[i],xs[i+1]-xs[i],ys[i+1]-ys[i],head_width = 0.06,head_length = 0.13,zorder=1,color = color)
-        else:
-            axes.plot([xs[i],xs[i+1]],[ys[i],ys[i+1]],color = color)
 
 def groupedPlots(color2,colorbar="double"):
 
@@ -177,3 +219,4 @@ def groupedPlots(color2,colorbar="double"):
 
 groupedPlots(cm.terrain,"single")
 
+"""
