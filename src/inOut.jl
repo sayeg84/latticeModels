@@ -8,7 +8,7 @@ module InOut
     import ..IsingModel
     import ..ChangeSpin!
     using DelimitedFiles, Statistics, Dates
-    dest = Dates.format(Dates.now(),"dd-mm-Y HH:MM")
+    dest = Dates.format(Dates.now(),"dd-mm-Y_HH-MM")
 
     """
         ParseArray(array::String)
@@ -80,7 +80,7 @@ module InOut
             write(io,"Dimension,$(metaParam[2])\n")
             write(io,"Geometry,$(metaParam[3])\n")
             write(io,"Energy Function,$(metaParam[4])\n")
-            write(io,"N,$(metaParam[5])\n")
+            write(io,"Model,$(metaParam[5])\n")
         end
     end
 
@@ -176,6 +176,7 @@ module InOut
         cd("..")
     end
 
+    #=
     function MetropolisAllOut(initSys,changes,algoParam)
         open("initial.csv","w") do io
             DelimitedFiles.writedlm(io,initSys.linearLatt,',')
@@ -186,6 +187,33 @@ module InOut
             end
         end
     end
+
+    =#
+
+    function MetropolisAllOut(initSys,res,name)
+        open(string(name,"_initial.csv"),"w") do io
+            DelimitedFiles.writedlm(io,initSys.linearLatt,',')
+        end
+        open(string(name,"_changes.csv"),"w") do io
+            DelimitedFiles.writedlm(io,res[1],',')
+        end
+        open(string(name,"_mag.csv"),"w") do io
+            DelimitedFiles.writedlm(io,res[3],',')
+        end
+        open(string(name,"_ener.csv"),"w") do io
+            DelimitedFiles.writedlm(io,res[4],',')
+        end
+    end
+
+    function WriteSimulParamDict(paramDict)
+        open("paramDict.csv","w") do io
+            write(io,"index,B,J,C,kT \n  ")
+            for pair in paramDict
+                write(io,string("$(pair.second),",join([string(v) for v in pair.first],",")," \n"))
+            end
+        end
+    end
+
 
     function ReadSingleSimul(name)
         original = pwd()

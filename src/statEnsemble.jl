@@ -76,7 +76,7 @@ module StatEnsemble
     end
 
 
-    function Magnetization(sys::IsingModel,absolute=true)
+    function Magnetization(sys::IsingModel;absolute=true)
         if absolute
             a = abs(sum(sys.linearLatt))
         else
@@ -85,13 +85,21 @@ module StatEnsemble
         return a/N(sys)
     end
     
-    function Magnetization(X::Array{IsingModel,1},absolute=true)
+    function Magnetization(X::Array{IsingModel,1};absolute=true)
         if absolute
             a = Statistics.mean([abs(sum(x.linearLatt)) for x in X])
         else
             a = Statistics.mean([sum(x.linearLatt) for x in X])
         end
         return a/N(X[1])
+    end
+
+    function MagnetizationUpdate(sys::SpinLattice,pos::Integer)
+        return -2*sys.linearLatt[pos]
+    end
+
+    function MagnetizationUpdate(sys::LatticeGas,pos::Integer)
+        return 1 - 2*sys.linearLatt[pos]
     end
 
 

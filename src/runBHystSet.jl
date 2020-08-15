@@ -22,7 +22,7 @@ println()
 function ParseCommandline()
     s = ArgParseSettings()
 
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "-N", "--Nlatt" 
             help = "Lattice side"
             arg_type = Int64
@@ -112,17 +112,32 @@ let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
 end
 
 
-params=[Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
+params1 = [Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
+params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
+paramDict = Dict(params1[i] => i for i in 1:length(params1))
 
 println()
 println("Running mu-increasing simulations")
 println()
 
-@time @sync @distributed  for i in 1:length(params)
-    simulParam = params[i][1:4]
+
+@everywhere InOut.MakeAndEnterDirectories()
+if ~(isdir("mu-increasing"))
+    try mkdir("mu-increasing") catch SystemError end
+end
+@everywhere cd("mu-increasing")
+InOut.WriteAlgoParamTable(algoParam,"metropolis")
+InOut.WriteMetaParamTable(metaParam)
+InOut.WriteAdjMat(initSys[1])
+InOut.WriteSimulParamDict(paramDict)
+
+
+@time @sync @distributed for i in 1:length(params2)
+    iter = Int(params2[i][end])
+    simulParam = params2[i][1:4]
     nwork = myid()-1
     if nwork==1
-        per = round((i-1)*100*cores/length(params); digits= 2)
+        per = round((i-1)*100*cores/length(params2); digits= 2)
         prog = "Progress: $(per) % "
         #current="Current: B, J, C, T = $(simulParam) "
         println()
@@ -130,39 +145,66 @@ println()
         #println(current)
         println()
     end
-    InOut.MakeAndEnterDirectories()
-    if ~(isdir("mu-increasing"))
-        try mkdir("mu-increasing") catch SystemError end
+    name = string(paramDict[simulParam],"_",iter)
+    res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
+    InOut.MetropolisAllOut(initSys[iter],res,name)
+    initSys[iter] = copy(res[2])
+    if i==length(params2)
+        println()
+        println("Progress: 100 %")
+        println()
     end
-    cd("mu-increasing")
-    InOut.WriteAlgoParamTable(algoParam,"metropolis")
-    InOut.WriteMetaParamTable(metaParam)
-    InOut.WriteAdjMat(initSys[1])
-    res = Algorithms.MetropolisFast(initSys[nwork],enerFunc,simulParam,algoParam)
-    name = string(simulParam,"_",string(nwork))
-    mkdir(name)
-    cd(name)
-    InOut.MetropolisAllOut(initSys[nwork],res[1],algoParam)
-    InOut.WriteSimulParamTable(simulParam)
-    initSys[nwork] = copy(res[2])
-    cd("..")
-    cd("..")
-    InOut.ExitDirectories()
+end
+
+@everywhere cd("..")
+
+
+println()
+println("Running mu-decreasing simulations")
+println()
+
+
+
+params1 = [Array{Float64,1}([bArray[end-i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i3 in 1:length(cArray) for i1 in 0:(length(bArray)-1) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
+params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
+paramDict = Dict(params1[i] => i for i in 1:length(params1))
+
+if ~(isdir("mu-decreasing"))
+    try mkdir("mu-decreasing") catch SystemError end
+end
+@everywhere cd("mu-decreasing")
+InOut.WriteAlgoParamTable(algoParam,"metropolis")
+InOut.WriteMetaParamTable(metaParam)
+InOut.WriteAdjMat(initSys[1])
+InOut.WriteSimulParamDict(paramDict)
+
+
+@time @sync @distributed for i in 1:length(params2)
+    iter = Int(params2[i][end])
+    simulParam = params2[i][1:4]
+    nwork = myid()-1
+    if nwork==1
+        per = round((i-1)*100*cores/length(params2); digits= 2)
+        prog = "Progress: $(per) % "
+        #current="Current: B, J, C, T = $(simulParam) "
+        println()
+        println(prog)
+        #println(current)
+        println()
+    end
+    name = string(paramDict[simulParam],"_",iter)
+    res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
+    InOut.MetropolisAllOut(initSys[iter],res,name)
+    initSys[iter] = copy(res[2])
+    if i==length(params2)
+        println()
+        println("Progress: 100 %")
+        println()
+    end
 end
 
 
-println()
-println("Running forwards simulations")
-println()
-
-
-
-params=[Array{Float64,1}([bArray[end-i1],jArray[i2],cArray[i3],tArray[end-i4],iter]) for iter in 1:algoParam[2] for i3 in 1:length(cArray) for i1 in 0:(length(bArray)-1) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
-
-println()
-println("Running simulations")
-println()
-
+#=
 @time @sync @distributed  for i in 1:length(params)
     simulParam = params[i][1:4]
     nwork = myid()-1
@@ -194,3 +236,39 @@ println()
     cd("..")
     InOut.ExitDirectories()
 end
+=#
+
+
+#=
+@time @sync @distributed  for i in 1:length(params)
+    simulParam = params[i][1:4]
+    nwork = myid()-1
+    if nwork==1
+        per = round((i-1)*100*cores/length(params); digits= 2)
+        prog = "Progress: $(per) % "
+        #current="Current: B, J, C, T = $(simulParam) "
+        println()
+        println(prog)
+        #println(current)
+        println()
+    end
+    InOut.MakeAndEnterDirectories()
+    if ~(isdir("mu-increasing"))
+        try mkdir("mu-increasing") catch SystemError end
+    end
+    cd("mu-increasing")
+    InOut.WriteAlgoParamTable(algoParam,"metropolis")
+    InOut.WriteMetaParamTable(metaParam)
+    InOut.WriteAdjMat(initSys[1])
+    res = Algorithms.MetropolisFast(initSys[nwork],enerFunc,simulParam,algoParam)
+    name = string(simulParam,"_",string(nwork))
+    mkdir(name)
+    cd(name)
+    InOut.MetropolisAllOut(initSys[nwork],res[1],algoParam)
+    InOut.WriteSimulParamTable(simulParam)
+    initSys[nwork] = copy(res[2])
+    cd("..")
+    cd("..")
+    InOut.ExitDirectories()
+end
+=#

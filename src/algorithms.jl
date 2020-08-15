@@ -13,6 +13,8 @@ module Algorithms
     import ..StatEnsemble.ProbAta
     import ..StatEnsemble.ProbOptimal
     import ..StatEnsemble.NormalEnergy
+    import ..StatEnsemble.Magnetization
+    import ..StatEnsemble.MagnetizationUpdate
     import ..RandomPosition
 
 
@@ -65,7 +67,7 @@ module Algorithms
 
     """
     
-    MetropolisOptimal(x,enerFunc,simulParam,algoParam)
+    MetropolisFast(x,enerFunc,simulParam,algoParam)
     
     Using x as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
@@ -74,21 +76,30 @@ module Algorithms
     function MetropolisFast(initSys,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
+        eners = Array{Float32,1}(undef,algoParam[1]+1)
+        mags = Array{Float32,1}(undef,algoParam[1]+1)
         ener = enerFunc(sys,simulParam)
+        mag = Magnetization(sys,absolute=false)
+        eners[1] = ener
+        mags[1] = abs(mag)
         for i in 1:algoParam[1]
             pos = RandomPosition(initSys)
             newEner = enerFunc(ChangeSpin(sys,pos),simulParam)
-            acep = exp(big((-newEner+ener)/simulParam[4]))
-            prob = rand()
-            if prob<acep
-                ChangeSpin!(sys,pos)
+            # using logarithms to make numbers smaller
+            acep = (-newEner+ener)/simulParam[4]
+            prob = log(rand())
+            if prob < acep
                 ener = newEner
+                mag +=  MagnetizationUpdate(sys,pos)
+                ChangeSpin!(sys,pos)
                 changes[i] = pos
             else 
                 changes[i] = 0
             end
+            eners[i+1] = ener
+            mags[i+1] = mag
         end
-        return changes, sys
+        return changes, sys , mags, eners
     end
 
 
@@ -106,7 +117,7 @@ module Algorithms
             pos = RandomPosition(sys)
             acep = ProbOptimal(sys,pos,enerFunc,simulParam)
             prob = rand()
-            if prob<acep
+            if prob < acep
                 ChangeSpin!(sys,pos)
                 ener = ener - log(acep)*simulParam[4]
                 changes[i] = pos
