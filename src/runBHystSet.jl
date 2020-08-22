@@ -114,7 +114,7 @@ end
 
 params1 = [Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
 params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
-paramDict = Dict(params1[i] => i for i in 1:length(params1))
+simulParamDict = Dict(params1[i] => i for i in 1:length(params1))
 
 println()
 println("Running mu-increasing simulations")
@@ -129,7 +129,7 @@ end
 InOut.WriteAlgoParamTable(algoParam,"metropolis")
 InOut.WriteMetaParamTable(metaParam)
 InOut.WriteAdjMat(initSys[1])
-InOut.WriteSimulParamDict(paramDict)
+InOut.WriteSimulParamDict(simulParamDict)
 
 
 @time @sync @distributed for i in 1:length(params2)
@@ -145,7 +145,7 @@ InOut.WriteSimulParamDict(paramDict)
         #println(current)
         println()
     end
-    name = string(paramDict[simulParam],"_",iter)
+    name = string(simulParamDict[simulParam],"_",iter)
     res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
     InOut.MetropolisAllOut(initSys[iter],res,name)
     initSys[iter] = copy(res[2])
@@ -167,7 +167,7 @@ println()
 
 params1 = [Array{Float64,1}([bArray[end-i1],jArray[i2],cArray[i3],tArray[end-i4]]) for i3 in 1:length(cArray) for i1 in 0:(length(bArray)-1) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
 params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
-paramDict = Dict(params1[i] => i for i in 1:length(params1))
+simulParamDict = Dict(params1[i] => i for i in 1:length(params1))
 
 if ~(isdir("mu-decreasing"))
     try mkdir("mu-decreasing") catch SystemError end
@@ -176,7 +176,7 @@ end
 InOut.WriteAlgoParamTable(algoParam,"metropolis")
 InOut.WriteMetaParamTable(metaParam)
 InOut.WriteAdjMat(initSys[1])
-InOut.WriteSimulParamDict(paramDict)
+InOut.WriteSimulParamDict(simulParamDict)
 
 
 @time @sync @distributed for i in 1:length(params2)
@@ -192,7 +192,7 @@ InOut.WriteSimulParamDict(paramDict)
         #println(current)
         println()
     end
-    name = string(paramDict[simulParam],"_",iter)
+    name = string(simulParamDict[simulParam],"_",iter)
     res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
     InOut.MetropolisAllOut(initSys[iter],res,name)
     initSys[iter] = copy(res[2])

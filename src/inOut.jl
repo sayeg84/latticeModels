@@ -88,7 +88,7 @@ module InOut
         open("algorithmParameters.csv","w") do io
             if algo=="metropolis" 
                 write(io,"steps,$(algoParam[1])\n")
-                #write(io,"averages,$(algoParam[3])\n")
+                write(io,"averages,$(algoParam[2])\n")
             else
                 write(io,"Nbins,$(algoParam[1])\n")
                 write(io,"Flatness percentage,$(algoParam[2])\n")
@@ -144,6 +144,12 @@ module InOut
         M = DelimitedFiles.readdlm("adjMat.csv",',',Int64)
         return M
     end
+
+    function ReadSimulParamDict()
+        x=DelimitedFiles.readdlm("simulParamDict.csv",',',skipstart=1)
+        return x
+    end
+
 
 
     function ReadDOSTable()
@@ -205,10 +211,10 @@ module InOut
         end
     end
 
-    function WriteSimulParamDict(paramDict)
-        open("paramDict.csv","w") do io
+    function WriteSimulParamDict(simulParamDict)
+        open("simulParamDict.csv","w") do io
             write(io,"index,B,J,C,kT \n  ")
-            for pair in paramDict
+            for pair in simulParamDict
                 write(io,string("$(pair.second),",join([string(v) for v in pair.first],",")," \n"))
             end
         end
@@ -232,35 +238,26 @@ module InOut
         cd(original)
         return sys, changes , metaParam, simulParam , algoParam, adjMat
     end
-    
-    function ReadSingleSimul(name,frequency)
-        original = pwd()
-        cd(name)
+
+    function ReadSingleSimul(simulParamIndex,iterIndex,metaParam,adjMat)
+        # original = pwd()
+        # metaParam = InOut.ReadMetaParamTable()
+        # algoParam = InOut.ReadAlgoParamTable()
+        # adjMat = InOut.ReadAdjMat()
+        # paramArray = InOut.ReadParamDict()
+        # cd(name)   
         print("Reading ")
-        println(name)
-        simulParam = InOut.ReadSimulParamTable()
-        metaParam = InOut.ReadMetaParamTable()
-        algoParam = InOut.ReadAlgoParamTable()
-        adjMat = InOut.ReadAdjMat()
-        sys = DelimitedFiles.readdlm("initial.csv",',',Int8)
+        println("$(simulParamIndex),$(iterIndex)")
+        sys = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"initial.csv"],"_"),',',Int8)
         sys = reshape(sys,length(sys))
         sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
-        changes = DelimitedFiles.readdlm("changes.csv",',',Int32)
+        changes = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"changes.csv"],"_"),',',Int32)
         changes = reshape(changes,length(changes))
-        systems = Array{IsingModel,1}()
-        push!(systems,copy(sys))
-        for i in 1:algoParam[1]
-            if changes[i] != 0
-                ChangeSpin!(sys,changes[i])
-            end
-            if mod(i,frequency) == 0
-                push!(systems,copy(sys))
-            end
-        end
-        cd(original)
-        return systems , metaParam, simulParam , algoParam, adjMat
+        M = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"mag.csv"],"_"),',',Float64)
+        E = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"ener.csv"],"_"),',',Float64)
+        return sys, changes, M, E
     end
-
+    
     #=
 
     """

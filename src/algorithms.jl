@@ -22,14 +22,14 @@ module Algorithms
     using Statistics
 
     """
-    Metropolis(x,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
+    Metropolis(x,enerFunc,simulParam,algoParam)
 
     Using x as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
 
     """
     #@show StatEnsemble.Prob
-    function Metropolis(initSys,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
+    function Metropolis(initSys,enerFunc,simulParam,algoParam)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
         for i in 1:algoParam[1]
@@ -46,7 +46,7 @@ module Algorithms
         return changes, sys
     end
 
-    function MetropolisNewAta(initSys,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
+    function MetropolisNewAta(initSys,enerFunc,simulParam,algoParam)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
         ener = enerFunc(sys,simulParam)
@@ -73,13 +73,13 @@ module Algorithms
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
     
     """
-    function MetropolisFast(initSys,enerFunc,simulParam::AbstractArray,algoParam::AbstractArray)
+    function MetropolisFast(initSys,enerFunc,simulParam,algoParam)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
         eners = Array{Float32,1}(undef,algoParam[1]+1)
         mags = Array{Float32,1}(undef,algoParam[1]+1)
         ener = enerFunc(sys,simulParam)
-        mag = Magnetization(sys,absolute=false)
+        mag = Magnetization(sys,absolute=false)*N(sys)
         eners[1] = ener
         mags[1] = abs(mag)
         for i in 1:algoParam[1]

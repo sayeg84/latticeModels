@@ -20,13 +20,17 @@ println()
 function ParseCommandline()
     s = ArgParseSettings()
 
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "-D", "--path" 
             help = "Directory path to analyse set"
             arg_type = String
             required=true
-        "-N", "--ncut" 
-            help = "Directory path to analyse set"
+        "-S", "--fromSystem" 
+            help = "Whether to recalculate M and E from systems by rebuilding chain"
+            arg_type = Bool
+            default = false
+        "-C", "--cut" 
+            help = "Cut of chain for macroscopic variables"
             arg_type = Float64
             default = 1/2
         "-F", "--frequency" 
@@ -41,7 +45,7 @@ parsedArgs = ParseCommandline()
 
 
 
-function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency,cut=1/2)
+function MacroscopicVariablesFromChain(initSys,changes,metaParam,simulParam,frequency,cut=1/2)
     sys = copy(initSys)
     M = Array{Float64,1}()
     E = Array{Float64,1}()
@@ -62,76 +66,99 @@ function MacroscopicVariables(initSys,changes,metaParam,simulParam,frequency,cut
     m = Statistics.mean(M)
     E = E[ncut:end]
     e = Statistics.mean(E)
-    xi = Statistics.var(M.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
+    chi = Statistics.var(M.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
     cv = Statistics.var(E.*N(initSys),corrected=false) / ((simulParam[4]^2)*(N(initSys)))
-    return m,e,cv,xi
+    return m , e , cv , chi
 end
 
-function GetMacroscopicVariables(name;cut=1/2)
+function MacroscopicVariables(initSys,M,E,simulParam,frequency,cut=1/2)
+    ncut = Int64(floor(length(M)*cut))
+    M = M[ncut:frequency:end]./N(initSys)
+    m = Statistics.mean(M)
+    E = E[ncut:frequency:end]./N(initSys)
+    e = Statistics.mean(E)
+    chi = Statistics.var(M.*N(initSys),corrected=false) / (simulParam[4]*(N(initSys)))
+    cv = Statistics.var(E.*N(initSys),corrected=false) / ((simulParam[4]^2)*(N(initSys)))
+    return m , e , cv , chi
+end
+
+
+
+function GetMacroscopicVariables(; cut=1/2, fromSystem = false)
     M = Array{Float64,1}()
     E = Array{Float64,1}()
     CV = Array{Float64,1}()
-    Xi = Array{Float64,1}()
+    Chi = Array{Float64,1}()
+    indexes = []
     #getting list of directories
-    original = pwd()
-    cd(name)
-    dirs = InOut.Folders()
-    for folder in dirs
-        @time data = InOut.ReadSingleSimul(folder); res = MacroscopicVariables(data[1], data[2], data[3], data[4], parsedArgs["frequency"],cut)
-        push!(M,res[1])
-        push!(E,res[2])
-        push!(CV,res[3])
-        push!(Xi,res[4])
+
+    simulParamDict = InOut.ReadSimulParamDict()
+    metaParam = InOut.ReadMetaParamTable()
+    algoParam = InOut.ReadAlgoParamTable()
+    adjMat = InOut.ReadAdjMat()     
+    for i in 1:size(simulParamDict)[1]
+        simulParamIndex = Int(simulParamDict[i,1])
+        for j in 1:algoParam[2]
+            if fromSystem
+                # read calculating variables by rebuilding chain
+                @time data = InOut.ReadSingleSimul(simulParamIndex,j,metaParam,adjMat) ; res = MacroscopicVariablesFromChain(data[1], data[2], metaParam, simulParamDict[i,2:end], parsedArgs["frequency"],cut)
+            else
+                # read using calculations already made
+                @time data = InOut.ReadSingleSimul(simulParamIndex,j,metaParam,adjMat) ; res = MacroscopicVariables(data[1],data[3],data[4],simulParamDict[i,2:end],parsedArgs["frequency"],cut)
+            end
+            push!(M,res[1])
+            push!(E,res[2])
+            push!(CV,res[3])
+            push!(Chi,res[4])
+            push!(indexes,(simulParamIndex,j))
+        end
     end
-    cd(original)
-    return ( dirs , M , E , CV , Xi )
+    return ( indexes , M , E , CV , Chi )
 end
 
-function AverageMacroscopicVariables(vals)
-    sims = [x for x in Set([string(split(d,"_")[1]) for d in vals[1]])]
+function AverageMacroscopicVariables(macros)
+    simulParamIndexes = [x for x in Set([var[1] for var in macros[1]])]
+    sort!(simulParamIndexes)
     M = []
     E = []
     CV = []
-    Xi = []
+    Chi = []
     Msigma = []
     Esigma = []
     CVsigma = []
-    Xisigma = []
-    for sim in sims
-        indexes = [ i for i in 1:length(vals[1]) if string(split(vals[1][i],"_")[1]) == sim ]
-        push!(M,Statistics.mean(vals[2][indexes]))
-        push!(E,Statistics.mean(vals[3][indexes]))
-        push!(CV,Statistics.mean(vals[4][indexes]))
-        push!(Xi,Statistics.mean(vals[5][indexes]))
-        push!(Msigma,Statistics.std(vals[2][indexes]))
-        push!(Esigma,Statistics.std(vals[3][indexes]))
-        push!(CVsigma,Statistics.std(vals[4][indexes]))
-        push!(Xisigma,Statistics.std(vals[5][indexes]))
+    Chisigma = []
+    for i in 1:length(simulParamIndexes)
+        indexes = [ j for j in 1:length(macros[1]) if macros[1][j][1] == simulParamIndexes[i]]
+        push!(M,Statistics.mean(macros[2][indexes]))
+        push!(E,Statistics.mean(macros[3][indexes]))
+        push!(CV,Statistics.mean(macros[4][indexes]))
+        push!(Chi,Statistics.mean(macros[5][indexes]))
+        push!(Msigma,Statistics.std(macros[2][indexes]))
+        push!(Esigma,Statistics.std(macros[3][indexes]))
+        push!(CVsigma,Statistics.std(macros[4][indexes]))
+        push!(Chisigma,Statistics.std(macros[5][indexes]))
     end
-    return ( sims , M , E , CV , Xi, Msigma , Esigma , CVsigma , Xisigma )
+    return ( M , E , CV , Chi, Msigma , Esigma , CVsigma , Chisigma )
 end
 
-function MacroscopicTables(name,vals)
-    original = pwd()
-    cd(name)
-    open("Macroscopic.csv","w") do f
-        write(f,"Mu,J,C,kT,M,E,CV,Xi,Msigma,Esigma,CVsigma,Xisigma\n")
-        for i in 1:length(vals[1])
-            simulParam = InOut.ParseArray(vals[1][i])
-            write(f,"$(simulParam[1]),$(simulParam[2]),$(simulParam[3]),$(simulParam[4]),$(vals[2][i]),$(vals[3][i]),$(vals[4][i]),$(vals[5][i]),$(vals[6][i]),$(vals[7][i]),$(vals[8][i]),$(vals[9][i])\n")
-        end
+function MacroscopicTables(avgMacros)
+    simulParamDict = InOut.ReadSimulParamDict()
+    open("macroscopic.csv","w") do f
+        write(f,"Index,B,J,C,kT,M,E,CV,Chi,Msigma,Esigma,CVsigma,Chisigma\n")
+        DelimitedFiles.writedlm(f,hcat(sortslices(simulParamDict,dims=1),avgMacros...),',')
     end
     cd(original)
 end
 
 println()
 println("Making Analysis")
-println("ncut = $(parsedArgs["ncut"])")
+println("cut = $(parsedArgs["cut"])")
 println()
 
 
-
-@time vals = GetMacroscopicVariables(parsedArgs["path"],cut = parsedArgs["ncut"])
-vals = AverageMacroscopicVariables(vals)
-MacroscopicTables(parsedArgs["path"],vals)
-
+original = pwd()
+cd(parsedArgs["path"])
+@time macros = GetMacroscopicVariables(cut = parsedArgs["cut"],fromSystem=parsedArgs["fromSystem"])
+avgMacros = AverageMacroscopicVariables(macros)
+MacroscopicTables(avgMacros)
+cd(original)

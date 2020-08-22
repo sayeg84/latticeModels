@@ -15,10 +15,11 @@ sizes=(50 64 80 100)
 #        sleep 60
 #    done
 #done
-for si in "${sizes[@]}" ; do
-    julia runParSet.jl -n $si -A 4 -M Lattice -M LatticeGas -E  PenalizedEnergy -S 2.0
-done
-                                                                                                                                              
+
+julia runParSet.jl --Barray "0,-3.5,21" --Carray "0.9,0.9,1" --Jarray "2,2,1" --kTarray "0.5,0.5,1" --order "B,kT,C,J" -N 32 -S 2.0 -M LatticeGas -E PenalizedEnergy 
+
+#julia runParSet.jl --Barray "-3.5,0,21" --Carray "0.9,0.9,1" --Jarray "2,2,1" --kTarray "0.5,0.5,1" --order "B,kT,C,J" -N 32 -S 2.0 -M LatticeGas -E PenalizedEnergy 
+
 for folder in ../outputs/*/ ; do
     echo $folder
     if [[ -d "$folder/endothermic" ]]

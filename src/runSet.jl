@@ -47,23 +47,58 @@ function ParseCommandline()
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
             default = 2
+        "-B", "--Barray"
+            help = "String describing the begining, end and length of the Barray. Reverse order (begining > end) is supported"
+            arg_type = String
+            default = "-3.5,0.0,21"
+        "-J", "--Jarray"
+            help = "String describing the begining, end and length of the Jarray. Reverse order (begining > end) is supported"
+            arg_type = String
+            default = "2.0,2.0,1"
+        "-C", "--Carray"
+            help = "String describing the begining, end and length of the Carray. Reverse order (begining > end) is supported"
+            arg_type = String
+            default = "0.2,1.8,21"
+        "-T", "--kTarray"
+            help = "String describing the begining, end and length of the kTarray. Reverse order (begining > end) is supported"
+            arg_type = String
+            default = "0.5,0.5,1"
+        "-O", "--order"
+            help = "String describing the order of parameters to retrive. String must be a permutation of B,J,C,kT separated by commas"
+            arg_type = String
+            default = "B,J,C,kT"
     end
     return parse_args(s)
 end
 
+function TupleToRange(str)
+    numbers = split(str,',')
+    if length(numbers) != 3
+        error("String $(str) non parsable")
+    else
+        tup = (parse(Float64,numbers[1]),parse(Float64,numbers[2]),parse(Int64,numbers[3]))
+        if tup[3] == 1
+            return tup[1]
+        else
+            return range(tup[1],stop = tup[2], length = tup[3])
+        end
+    end
+end
+
 parsedArgs = ParseCommandline()
 
-algoParam=Array{Int64,1}([
+algoParam=NTuple{2,Int64}((
     floor(10^parsedArgs["sweeps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
     parsedArgs["Systems"]
-])
-metaParam=[
+))
+
+metaParam=(
     parsedArgs["Nlatt"],
     parsedArgs["dim"],
     string(parsedArgs["Geometry"],"LatticeNeighbors"),
     parsedArgs["EnerFunc"],
     parsedArgs["Model"]
-]
+)
 
 
 
@@ -78,30 +113,34 @@ enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
 
 #initializing parameters
 
-bArray = [0,2,4,6,8]
-jArray = [1]
-cArray = [0]
-tArray = [0,1,2,3]
+arrays = []
+varsOrder = split(parsedArgs["order"],',')
+for var in varsOrder
+    println(var)
+    array = TupleToRange(parsedArgs[string(var,"array")])
+    println(array)
+    push!(arrays,array)
+end
+orderDict = Dict(varsOrder[i] => i for i in 1:length(varsOrder))
+params1 = [simulParam for simulParam in Iterators.product(arrays...)]
+params1 = reshape(params1,length(params1))
 
-#bArray = range(-3.3,stop = -1.5,length = 31)
-#jArray = [2.0]
-#cArray = [0.8]
-#tArray = [0.5]
+#params1 = [collect(simulParam[[orderDict["B"],orderDict["J"],orderDict["C"],orderDict["kT"]]]) for simulParam in params1]
+#params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
+#display(params2)
 
-
-
-params1 = [Array{Float64,1}([bArray[i1],jArray[i2],cArray[i3],tArray[end-i4]])  for i3 in 1:length(cArray) for i1 in 1:length(bArray) for i4 in 0:(length(tArray)-1) for i2 in 1:length(jArray)]
-
-params2 = [vcat(par,[iter]) for iter in 1:algoParam[2] for par in params1]
-
-paramDict = Dict(params1[i] => i for i in 1:length(params1))
+# combination of parameters in desired order
+params1 = [simulParam[[orderDict["B"],orderDict["J"],orderDict["C"],orderDict["kT"]]] for simulParam in params1]
+# adding number of iterations
+params2 = [(par...,iter) for iter in 1:algoParam[2] for par in params1]
+simulParamDict = Dict(params1[i] => i for i in 1:length(params1))
 
 
 InOut.MakeAndEnterDirectories()
 InOut.WriteAlgoParamTable(algoParam,"metropolis")
 InOut.WriteMetaParamTable(metaParam)
 InOut.WriteAdjMat(initSys[1])
-InOut.WriteSimulParamDict(paramDict)
+InOut.WriteSimulParamDict(simulParamDict)
 
 println()
 println("Running simulations")
@@ -111,7 +150,7 @@ println()
 for i in 1:length(params2)
     iter = Int(params2[i][end])
     simulParam = params2[i][1:4]
-    name = string(paramDict[simulParam],"_",iter)
+    name = string(simulParamDict[simulParam],"_",iter)
     print("Running ")
     println(name)
     println(simulParam)
