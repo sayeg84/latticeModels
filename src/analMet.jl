@@ -49,7 +49,7 @@ function MacroscopicVariablesFromChain(initSys,changes,metaParam,simulParam,freq
     sys = copy(initSys)
     M = Array{Float64,1}()
     E = Array{Float64,1}()
-    enerFunc = getfield(StatEnsemble,Symbol( metaParam[4]))
+    enerFunc = getfield(StatEnsemble,Symbol(metaParam[4]))
     push!(M,StatEnsemble.Magnetization(sys))
     push!(E,enerFunc(sys,simulParam/N(initSys)))
     for i in 1:length(changes)

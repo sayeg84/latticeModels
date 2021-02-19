@@ -2,6 +2,7 @@ println("Ising model")
 println()
 
 using  Distributed
+using DelimitedFiles
 
 cores = 3
 Distributed.addprocs(cores)
@@ -24,12 +25,12 @@ function ParseCommandline()
             help = "Lattice side"
             arg_type = Int64
             default = 10
-        "-D", "--dim" 
-            help = "Dimension"
+        "-D", "--Dim" 
+            help = "Dimension for square lattice"
             arg_type = Int64
             default = 2
-        "-G", "--Geometry" 
-            help = "Lattice geometry"
+        "-L", "--Network" 
+            help = "Network for running the model. Must be direction of a CSV file containing an adjacency matrix or a lattice-creator function of Geometry class"
             arg_type = String
             default = "PeriodicSquare"
         "-E", "--EnerFunc" 
@@ -40,7 +41,7 @@ function ParseCommandline()
             help = "Lattice geometry"
             arg_type = String
             default = "SpinLattice"
-        "-S", "--sweeps"
+        "-S", "--Sweeps"
             help = "logarithm base 10 of total sweeps"
             arg_type = Float64
             default = 3.0
@@ -87,17 +88,17 @@ function TupleToRange(str)
     end
 end
 
-parsedArgs = ParseCommandline()
+const parsedArgs = ParseCommandline()
 
-algoParam=NTuple{2,Int64}((
-    floor(10^parsedArgs["sweeps"])*(parsedArgs["Nlatt"]^parsedArgs["dim"]),
+const algoParam=NTuple{2,Int64}((
+    floor(10^parsedArgs["Sweeps"])*(parsedArgs["Nlatt"]^parsedArgs["Dim"]),
     parsedArgs["Systems"]
 ))
 
-metaParam=(
+const metaParam=(
     parsedArgs["Nlatt"],
-    parsedArgs["dim"],
-    string(parsedArgs["Geometry"],"LatticeNeighbors"),
+    parsedArgs["Dim"],
+    parsedArgs["Network"],
     parsedArgs["EnerFunc"],
     parsedArgs["Model"]
 )
@@ -113,14 +114,20 @@ println()
 println("Initializing Lattice")
 println()
 
+# get the function of the model
+const sysFunc = getfield(Main,Symbol(parsedArgs["Model"])) 
 
-neigFunc = getfield(Lattices,Symbol(metaParam[3]))
-sysFunc = getfield(Main,Symbol(metaParam[5])) 
-initSys = [sysFunc(neigFunc,metaParam[1],metaParam[2]) for i in 1:cores]
+if isfile(parsedArgs["Network"])
+    adjMat = DelimitedFiles.readdlm(parsedArgs["Network"],',',Int64)
+    initSys = [sysFunc(adjMat) for i in 1:cores]
+else
+    neigFunc = getfield(Lattices,Symbol(string(parsedArgs["Network"],"LatticeNeighbors")))
+    initSys = [sysFunc(neigFunc,parsedArgs["Nlatt"],parsedArgs["Dim"]) for i in 1:cores]
+end
 
 
-let z  = getfield(StatEnsemble,Symbol( metaParam[4]))
-    @sync @everywhere enerFunc = $z
+let z  = getfield(StatEnsemble,Symbol( parsedArgs["EnerFunc"]))
+    @sync @everywhere const enerFunc = $z
 end
 
 println()
@@ -147,10 +154,6 @@ params1 = [simulParam[[orderDict["B"],orderDict["J"],orderDict["C"],orderDict["k
 # adding number of iterations
 params2 = [(par...,iter) for iter in 1:algoParam[2] for par in params1]
 simulParamDict = Dict(params1[i] => i for i in 1:length(params1))
-
-
-
-
 
 @everywhere InOut.MakeAndEnterDirectories()
 InOut.WriteAlgoParamTable(algoParam,"metropolis")
