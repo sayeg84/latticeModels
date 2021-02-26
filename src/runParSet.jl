@@ -4,7 +4,7 @@ println()
 using Distributed
 using DelimitedFiles
 
-const cores = Sys.CPU_CORES
+const cores = Sys.CPU_THREADS
 Distributed.addprocs(cores)
 
 @everywhere using ArgParse, Statistics, Dates
