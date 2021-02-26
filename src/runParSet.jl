@@ -1,10 +1,10 @@
 println("Ising model")
 println()
 
-using  Distributed
+using Distributed
 using DelimitedFiles
 
-cores = 3
+const cores = Sys.CPU_CORES
 Distributed.addprocs(cores)
 
 @everywhere using ArgParse, Statistics, Dates
