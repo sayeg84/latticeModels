@@ -396,7 +396,8 @@ module Cycles
         visited = falses(n)
         disc = [typemax(Int16) for i in 1:n]
         low = [typemax(Int16) for i in 1:n]
-        parent = 0 * ones(Int16,n)
+        #parent = 0 * ones(Int16,n)
+        parent = zeros(Int16,n)
         global brid = 0
         global bridgeArray = Array{Array{Int16,1},1}()
         for i in 1:n
@@ -492,7 +493,7 @@ module Cycles
         end
         print("Our algorithm: ")
         println(t1/iter)
-        print("Their algorithm: ")
+        print("LightGraphs algorithm: ")
         println(t2/iter)
         print("Internet algorithm: ")
         println(t3/iter)

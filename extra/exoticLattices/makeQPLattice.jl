@@ -106,6 +106,8 @@ function adjMat(X,Y)
     for i in 1:4:length(pairs)
         for j in 1:4
             mat[d[pairs[i+(j-1)]],d[pairs[i+(j%4)]]] = 1
+            # making symetric conection
+            mat[d[pairs[i+(j%4)]],d[pairs[i+(j-1)]]] = 1
         end
     end
     # positions post processing
