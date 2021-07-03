@@ -267,7 +267,8 @@ module Cycles
         Auxiliar function to get cycles from IsingModel and 
     """
     function ciclos2(sys)
-        n = sys.shape[1]
+        n = sqrt(N(sys))
+        n = Int(n)
         #println("hay ciclos")
         a = sys.linearLatt
         b = sys.linearNeigLatt
@@ -561,6 +562,7 @@ module Cycles
         t3 /= iter
         return t1,t2 , t3
     end
+    
     using DelimitedFiles
     function ComplexityData(Ns,iter = 100)
         open("../cyclesComplexity.csv","w") do io
