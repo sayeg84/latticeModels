@@ -70,7 +70,7 @@ struct SpinLattice<:IsingModel
         linearLatt = copy(latt)
         linearNeigLatt = EdgList(adjMat)
         linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
-        new(linearLatt,linearNeigLatt,linearNeigSumLatt,(size(adjMat)[1]))
+        new(linearLatt,linearNeigLatt,linearNeigSumLatt,(size(adjMat)[1],))
     end
 
     function SpinLattice(latt,adjMat,shape)
@@ -130,7 +130,7 @@ struct LatticeGas<:IsingModel
         linearLatt = copy(latt)
         linearNeigLatt = EdgList(adjMat)
         linearNeigSumLatt = mappedarray(x -> sum(linearLatt[x]),linearNeigLatt)
-        new(linearLatt,linearNeigLatt,linearNeigSumLatt,(size(adjMat)[1]))
+        new(linearLatt,linearNeigLatt,linearNeigSumLatt,(size(adjMat)[1],))
     end
     
     function LatticeGas(latt,adjMat,shape::Tuple)

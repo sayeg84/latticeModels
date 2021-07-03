@@ -25,6 +25,12 @@ module InOut
         return a
     end
 
+    function StringToTuple(str::AbstractString)
+        nums = split(str,',')
+        nums = [parse(Int64,num) for num in nums]
+        return Tuple(nums)
+    end
+
     """
         Folders()
 
@@ -77,9 +83,9 @@ module InOut
     function WriteMetaParamTable(metaParam)
         open("metaParameters.csv","w") do io 
             write(io,"N,$(metaParam[1])\n")
-            write(io,"Dimension,$(metaParam[2])\n")
+            write(io,"Periodic,$(metaParam[2])\n")
             write(io,"Geometry,$(metaParam[3])\n")
-            write(io,"Energy Function,$(metaParam[4])\n")
+            write(io,"EnergyFunction,$(metaParam[4])\n")
             write(io,"Model,$(metaParam[5])\n")
         end
     end
@@ -124,14 +130,20 @@ module InOut
     end
 
     function ReadMetaParamTable()
-        x=DelimitedFiles.readdlm("metaParameters.csv",',')
-        x=Array(x[:,end])
-        for i in 1:length(x)
-            if typeof(x[i]) == SubString{String}
-                x[i] = replace(x[i]," " =>"")
+        x = readlines("metaParameters.csv")
+        res = []
+        for (i,row) in enumerate(x)
+            arr = split(row,',')
+            if arr[1]=="N"
+                tuple = join(arr[2:end],',')
+                # remove parenthesis
+                tuple = tuple[2:(end-1)]
+                push!(res,StringToTuple(tuple))
+            else
+                push!(res,arr[2])
             end
         end
-        return x
+        return res
     end
 
     function ReadAlgoParamTable()
@@ -232,7 +244,7 @@ module InOut
         simulParam = InOut.ReadSimulParamTable()
         sys = DelimitedFiles.readdlm("initial.csv",',',Int8)
         sys = reshape(sys,length(sys))
-        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
+        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat)
         changes = DelimitedFiles.readdlm("changes.csv",',',Int32)
         changes = reshape(changes,length(changes))
         cd(original)
@@ -250,7 +262,8 @@ module InOut
         println("$(simulParamIndex),$(iterIndex)")
         sys = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"initial.csv"],"_"),',',Int8)
         sys = reshape(sys,length(sys))
-        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat,(metaParam[1],metaParam[2]))
+        println(metaParam)
+        sys = getfield(Main,Symbol(metaParam[5]))(sys,adjMat)
         changes = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"changes.csv"],"_"),',',Int32)
         changes = reshape(changes,length(changes))
         M = DelimitedFiles.readdlm(join([simulParamIndex,iterIndex,"mag.csv"],"_"),',',Float64)
