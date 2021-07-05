@@ -73,15 +73,15 @@ function plotSystem(sys,c;zpos=0)
     sizes = tuple(sizes...)
     positions = Lattices.SquarePositionLattice(sizes)
     positions = reshape(positions,length(positions))
-    ones = [i for i in 1:N(sys) if sys.linearLatt[i]==1]
+    ones = [i for i in 1:N(sys) if sys.sites[i]==1]
     xpositions = [positions[i][1] for i in ones ]
     ypositions = [positions[i][2] for i in ones ]
     PyPlot.scatter(xpositions,ypositions,s=140,color=c,zorder=zpos)
     visited = falses(N(sys))
     for i in 1:N(sys)
-        if sys.linearLatt[i] == 1
-            for j in sys.linearNeigLatt[i]
-                if sys.linearLatt[j]==1
+        if sys.sites[i] == 1
+            for j in sys.edgList[i]
+                if sys.sites[j]==1
                     PyPlot.plot([positions[i][1],positions[j][1]],[positions[i][2],positions[j][2]],color=c,zorder=zpos-1)
                 end
             end

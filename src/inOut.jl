@@ -37,7 +37,7 @@ module InOut
         Function to return array with strings of folder names in current working directory
     """
     function Folders()
-        a=[x for x in readdir() if isdir(x) && ~(x[1]=='.')]
+        a=[file for file in readdir() if isdir(file) && ~(file[1]=='.')]
         return a
     end
 
@@ -104,8 +104,8 @@ module InOut
         end
     end
 
-    function WriteAdjMat(x::IsingModel)
-        M = AdjMat(x.linearNeigLatt)
+    function WriteAdjMat(sys::IsingModel)
+        M = AdjMat(sys.edgList)
         open("adjMat.csv","w") do io
             DelimitedFiles.writedlm(io,M,',')
         end
@@ -124,15 +124,15 @@ module InOut
 
 
     function ReadSimulParamTable()
-        x=DelimitedFiles.readdlm("simulationParameters.csv",',')
-        x=Array{Float64,1}(x[:,end])
-        return x
+        table = DelimitedFiles.readdlm("simulationParameters.csv",',')
+        table = Array{Float64,1}(table[:,end])
+        return table
     end
 
     function ReadMetaParamTable()
-        x = readlines("metaParameters.csv")
+        table = readlines("metaParameters.csv")
         res = []
-        for (i,row) in enumerate(x)
+        for (i,row) in enumerate(table)
             arr = split(row,',')
             if arr[1]=="N"
                 tuple = join(arr[2:end],',')
@@ -147,9 +147,9 @@ module InOut
     end
 
     function ReadAlgoParamTable()
-        x=DelimitedFiles.readdlm("algorithmParameters.csv",',')
-        x=Array(x[:,end])
-        return x
+        table = DelimitedFiles.readdlm("algorithmParameters.csv",',')
+        table = Array(table[:,end])
+        return table
     end
 
     function ReadAdjMat()
@@ -158,8 +158,8 @@ module InOut
     end
 
     function ReadSimulParamDict()
-        x=DelimitedFiles.readdlm("simulParamDict.csv",',',skipstart=1)
-        return x
+        table = DelimitedFiles.readdlm("simulParamDict.csv",',',skipstart=1)
+        return table
     end
 
 
@@ -174,21 +174,21 @@ module InOut
     end
 
     """
-        MetropolisSystemsOut(X,param,name)
+        MetropolisSystemsOut(sysArray,param,name)
 
-        Outputs array of matrices X from Metropolis-based simulation with params `param` into a folder with name `name`
+        Outputs array of matrices sysArray from Metropolis-based simulation with params `param` into a folder with name `name`
     """
 
-    function MetropolisSystemsOut(X,algoParam)
+    function MetropolisSystemsOut(sysArray,algoParam)
         if ~(isdir("systems"))
             mkdir("systems")
         end
         cd("systems")
-        for i in 1:length(X)
+        for i in 1:length(sysArray)
             n=Int64((i-1)*algoParam[2])
             name="$(n).csv"
             open(name,"w") do io
-                DelimitedFiles.writedlm(io,X[i].linearLatt)
+                DelimitedFiles.writedlm(io,sysArray[i].sites)
             end
         end
         cd("..")
@@ -197,7 +197,7 @@ module InOut
     #=
     function MetropolisAllOut(initSys,changes,algoParam)
         open("initial.csv","w") do io
-            DelimitedFiles.writedlm(io,initSys.linearLatt,',')
+            DelimitedFiles.writedlm(io,initSys.sites,',')
         end
         open("changes.csv","w") do io
             for i in 1:algoParam[1]
@@ -210,7 +210,7 @@ module InOut
 
     function MetropolisAllOut(initSys,res,name)
         open(string(name,"_initial.csv"),"w") do io
-            DelimitedFiles.writedlm(io,initSys.linearLatt,',')
+            DelimitedFiles.writedlm(io,initSys.sites,',')
         end
         open(string(name,"_changes.csv"),"w") do io
             DelimitedFiles.writedlm(io,res[1],',')

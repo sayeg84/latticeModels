@@ -117,7 +117,7 @@ function GetMacroscopicVariables(; cut=1/2, fromSystem = false)
 end
 
 function AverageMacroscopicVariables(macros)
-    simulParamIndexes = [x for x in Set([var[1] for var in macros[1]])]
+    simulParamIndexes = [idx for idx in Set([var[1] for var in macros[1]])]
     sort!(simulParamIndexes)
     M = []
     E = []

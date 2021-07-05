@@ -270,8 +270,8 @@ module Cycles
         n = sqrt(N(sys))
         n = Int(n)
         #println("hay ciclos")
-        a = sys.linearLatt
-        b = sys.linearNeigLatt
+        a = sys.sites
+        b = sys.edgList
         vec=ciclos(a,b,n,n)[2]
         return matrizar(vec,(n,n))
     end
@@ -284,12 +284,12 @@ module Cycles
     
     using LightGraphs, LinearAlgebra
     """
-        lgEdgesInCycles(x)
+        lgEdgesInCycles(sys)
 
         Function to get number of edges in cycles using LightGraphs package
     """
-    function lgEdgesInCycles(x::Union{IsingModel,LatticeGas})
-        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
+    function lgEdgesInCycles(sys::IsingModel)
+        edgList = [[y for y in sys.edgList[pos] if sys.sites[y]==1 && sys.sites[pos]==1] for pos in 1:N(sys) ]
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
@@ -298,12 +298,12 @@ module Cycles
         return G.ne-length(brid)
     end
     """
-        lgEdgesInCycles(x)
+        lgEdgesInCycles(sys)
 
         Function to get induced subgraph by vertex in cycles using LightGraphs package
     """
-    function lgCycles(x)
-        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
+    function lgCycles(sys)
+        edgList = [[y for y in sys.edgList[pos] if sys.sites[y]==1 && sys.sites[pos]==1] for pos in 1:N(sys) ]
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
@@ -313,17 +313,17 @@ module Cycles
     end
 
     """
-        lgEdgesInCycles(x)
+        lgEdgesInCycles(sys)
 
         Function to get induced subgraph by vertex in cycles using LightGraphs package
     """
     function lgNewCycles(x1,x2)
-        edgList = [[y for y in x1.linearNeigLatt[pos] if x1.linearLatt[y]==1 && x1.linearLatt[pos]==1] for pos in 1:N(x1) ]
+        edgList = [[y for y in x1.edgList[pos] if x1.sites[y]==1 && x1.sites[pos]==1] for pos in 1:N(x1) ]
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
         withoutbrid1 = [e for e in edges(G) if !(in(e,brid))]
-        edgList = [[y for y in x2.linearNeigLatt[pos] if x2.linearLatt[y]==1 && x2.linearLatt[pos]==1] for pos in 1:N(x1) ]
+        edgList = [[y for y in x2.edgList[pos] if x2.sites[y]==1 && x2.sites[pos]==1] for pos in 1:N(x1) ]
         a = AdjMat(edgList)
         G = Graph(a)
         brid = bridges(G)
@@ -356,10 +356,10 @@ module Cycles
         return bridgeArray
     end
 
-    function CycSubSys(x)
+    function CycSubSys(sys)
         global count = 0
-        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x)]
-        n = N(x)
+        edgList = [[y for y in sys.edgList[pos] if sys.sites[y]==1 && sys.sites[pos]==1] for pos in 1:N(sys)]
+        n = N(sys)
         visited = falses(n)
         disc = [typemax(Int16) for i in 1:n]
         low = [typemax(Int16) for i in 1:n]
@@ -377,9 +377,9 @@ module Cycles
             adjMat[brid[2],brid[1]] = 0
         end
         degs = sum(adjMat,dims=1)
-        y = copy(x)
+        y = copy(sys)
         for i in 1:n
-            if degs[i] <= 1 && x.linearLatt[i] == 1
+            if degs[i] <= 1 && sys.sites[i] == 1
                 ChangeSpin!(y,i)
             end
         end
@@ -390,10 +390,10 @@ module Cycles
         
         Function to return number of all edges in cycles. Uses DFS-based algorithm
     """
-    function EdgInCyc(x)
+    function EdgInCyc(sys)
         global count = 0
-        edgList = [[y for y in x.linearNeigLatt[pos] if x.linearLatt[y]==1 && x.linearLatt[pos]==1] for pos in 1:N(x) ]
-        n = N(x)
+        edgList = [[y for y in sys.edgList[pos] if sys.sites[y]==1 && sys.sites[pos]==1] for pos in 1:N(sys) ]
+        n = N(sys)
         visited = falses(n)
         disc = [typemax(Int16) for i in 1:n]
         low = [typemax(Int16) for i in 1:n]
@@ -455,42 +455,47 @@ module Cycles
         end
     end
 
+
+    
+end
+
+if abspath(PROGRAM_FILE) == @__FILE__
     using DelimitedFiles
 
     include("lattices.jl")
 
     function SaveExample(n::Int64 = 16)
-        x  = SpinLattice(Lattices.PeriodicSquareLatticeNeighbors,n,2)
+        sys  = SpinLattice("square",(n,n))
         open("../cycles.csv", "w") do io
-            DelimitedFiles.writedlm(io,ciclos2(x),",")
+            DelimitedFiles.writedlm(io,Cycles.ciclos2(sys),",")
         end
         open("../normal.csv", "w") do io
-            DelimitedFiles.writedlm(io,matrizar(x.linearLatt,(n,n)),",")
+            DelimitedFiles.writedlm(io,Cycles.matrizar(sys.sites,(n,n)),",")
         end  
     end
 
-    function SaveCopies(x,i)
+    function SaveCopies(sys,i)
         open(string("../cycles",i,".csv"), "w") do io
-            DelimitedFiles.writedlm(io,ciclos2(x),",")
+            DelimitedFiles.writedlm(io,Cycles.ciclos2(sys),",")
         end
         open(string("../normal",i,".csv"),"w") do io
-            DelimitedFiles.writedlm(io,matrizar(x.linearLatt,(n,n)),",")
+            DelimitedFiles.writedlm(io,Cycles.matrizar(sys.sites,(n,n)),",")
         end  
     end
 
     function TestPerformance(n::Int64 = 16,iter = 100)
-        x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-        ciclos2(x)
-        lgEdgesInCycles(x)
-        EdgInCyc(x)
+        sys  = LatticeGas("square",(n,n))
+        Cycles.ciclos2(sys)
+        Cycles.lgEdgesInCycles(sys)
+        Cycles.EdgInCyc(sys)
         t1 = 0.0
         t2 = 0.0
         t3 = 0.0
         for i in 1:iter
-            x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-            t1 += @elapsed ciclos2(x)
-            t2 += @elapsed lgEdgesInCycles(x)
-            t3 += @elapsed EdgInCyc(x)
+            sys  = LatticeGas("square",(n,n))
+            t1 += @elapsed Cycles.ciclos2(sys)
+            t2 += @elapsed Cycles.lgEdgesInCycles(sys)
+            t3 += @elapsed Cycles.EdgInCyc(sys)
         end
         print("Our algorithm: ")
         println(t1/iter)
@@ -503,17 +508,17 @@ module Cycles
 
     function EdjListFromLatt(latt)
         s = size(latt)
-        x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,s[1],length(s))
-        edgList = [[y for y in x.linearNeigLatt[pos] if latt[y]==1 && latt[pos]==1] for pos in 1:length(latt) ]
+        sys = LatticeGas("square",s)
+        edgList = [[y for y in sys.edgList[pos] if latt[y]==1 && latt[pos]==1] for pos in 1:length(latt) ]
         return edgList
     end
 
     function TestSimilarity1(n::Int64 = 16,iter = 100)
         for i in 1:iter
             println(i)
-            x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-            a = ciclos2(x)
-            b = lgCycles(x)
+            sys  = LatticeGas("square",(n,n))
+            a = Cycles.ciclos2(sys)
+            b = Cycles.lgCycles(sys)
             #b = b.fadjlist
             if sum(a) == length(b.fadjlist) 
                 println("eureka")
@@ -529,9 +534,9 @@ module Cycles
     function TestSimilarity2(n::Int64 = 16,iter = 100)
         for i in 1:iter
             println(i)
-            x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-            b = lgEdgesInCycles(x)
-            c = EdgInCyc(x)
+            sys  = LatticeGas("square",(n,n))
+            b = Cycles.lgEdgesInCycles(sys)
+            c = Cycles.EdgInCyc(sys)
             if b ==c
                 println("eureka")
             else
@@ -541,21 +546,21 @@ module Cycles
         end
     end
 
-    #TestPerformance(60,1)
-    #TestSimilarity2(30,100)
+    TestPerformance(60,1)
+    TestSimilarity2(30,100)
     function TestComplexity(n::Int64 = 16,iter = 100)
-        x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-        ciclos2(x)
-        lgEdgesInCycles(x)
-        EdgInCyc(x)
+        sys  = LatticeGas("square",(n,n))
+        Cycles.ciclos2(sys)
+        Cycles.lgEdgesInCycles(sys)
+        Cycles.EdgInCyc(sys)
         t1 = 0.0
         t2 = 0.0
         t3 = 0.0
         for i in 1:iter
-            x  = LatticeGas(Lattices.PeriodicSquareLatticeNeighbors,n,2)
-            t1 += @elapsed ciclos2(x)
-            t2 += @elapsed lgEdgesInCycles(x)
-            t3 += @elapsed EdgInCyc(x)
+            sys  = LatticeGas("square",(n,n))
+            t1 += @elapsed Cycles.ciclos2(sys)
+            t2 += @elapsed Cycles.lgEdgesInCycles(sys)
+            t3 += @elapsed Cycles.EdgInCyc(sys)
         end
         t1 /= iter
         t2 /= iter
@@ -565,7 +570,7 @@ module Cycles
     
     using DelimitedFiles
     function ComplexityData(Ns,iter = 100)
-        open("../cyclesComplexity.csv","w") do io
+        open(joinpath("..","extra","cyclesComplexity.csv"),"w") do io
             write(io,"n,ours,LightGraphs,new\n")
             for n in Ns
                 println(n)
@@ -574,5 +579,5 @@ module Cycles
             end
         end
     end
-    #@time ComplexityData(100,5)
+    @time ComplexityData(100,5)
 end

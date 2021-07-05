@@ -9,9 +9,9 @@ module Algorithms
     import ..ChangeSpin
     import ..ChangeSpin!
     import ..N
-    import ..StatEnsemble.Prob
-    import ..StatEnsemble.ProbAta
-    import ..StatEnsemble.ProbOptimal
+    import ..StatEnsemble.LogProb
+    import ..StatEnsemble.LogProbAta
+    import ..StatEnsemble.LogProbOptimal
     import ..StatEnsemble.NormalEnergy
     import ..StatEnsemble.Magnetization
     import ..StatEnsemble.MagnetizationUpdate
@@ -22,54 +22,78 @@ module Algorithms
     using Statistics
 
     """
-    Metropolis(x,enerFunc,simulParam,algoParam)
+    Metropolis(initSys,enerFunc,simulParam,algoParam)
 
-    Using x as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
+    Using initSys as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
 
     """
-    #@show StatEnsemble.Prob
+    #@show StatEnsemble.LogProb
     function Metropolis(initSys,enerFunc,simulParam,algoParam)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
+        eners = Array{Float32,1}(undef,algoParam[1]+1)
+        mags = Array{Float32,1}(undef,algoParam[1]+1)
+        ener = enerFunc(sys,simulParam)
+        mag = Magnetization(sys,absolute=false)*N(sys)
+        eners[1] = ener
+        mags[1] = abs(mag)
         for i in 1:algoParam[1]
             pos = RandomPosition(sys)
-            acep = Prob(sys,pos,enerFunc,simulParam)
+            acep = LogProb(sys,pos,enerFunc,simulParam)
             prob = rand()
             if prob<acep
+                ener = newEner
+                mag +=  MagnetizationUpdate(sys,pos)
                 ChangeSpin!(sys,pos)
                 changes[i] = pos
             else 
                 changes[i] = 0
             end
+            eners[i+1] = ener
+            mags[i+1] = mag
         end
-        return changes, sys
+        return changes, sys, mags, eners
     end
 
+    """
+    MetropolisNewAta(initSys,enerFunc,simulParam,algoParam)
+
+    Using initSys as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. The probability transition is calculated from `ProbNewAta`, so that it runs faster. 
+
+    """
     function MetropolisNewAta(initSys,enerFunc,simulParam,algoParam)
         sys = copy(initSys)
         changes = zeros(Int32,algoParam[1])
+        eners = Array{Float32,1}(undef,algoParam[1]+1)
+        mags = Array{Float32,1}(undef,algoParam[1]+1)
         ener = enerFunc(sys,simulParam)
+        mag = Magnetization(sys,absolute=false)*N(sys)
+        eners[1] = ener
+        mags[1] = abs(mag)
         for i in 1:algoParam[1]
             pos = RandomPosition(sys)
-            acep = ProbAta(ener,sys,pos,simulParam)
-            prob = rand()
+            acep = LogProbAta(ener,sys,pos,simulParam)
+            prob = log(rand())
             if prob<acep
                 ChangeSpin!(sys,pos)
                 ener = ener - log(acep)*simulParam[4]
+                mag +=  MagnetizationUpdate(sys,pos)
                 changes[i] = pos
             else 
                 changes[i] = 0
             end
+            eners[i+1] = ener
+            mags[i+1] = mag
         end
         return changes, sys
     end
 
     """
     
-    MetropolisFast(x,enerFunc,simulParam,algoParam)
+    MetropolisFast(initSys,enerFunc,simulParam,algoParam)
     
-    Using x as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
+    Using initSys as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
     
     """
@@ -104,9 +128,9 @@ module Algorithms
 
 
     """
-    MetropolisOptimal(x,enerFunc,simulParam,algoParam)
+    MetropolisOptimal(initSys,enerFunc,simulParam,algoParam)
     
-    Using x as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
+    Using initSys as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
     The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
     """
     function MetropolisOptimal(initSys,enerFunc,simulParam,algoParam)
@@ -115,8 +139,8 @@ module Algorithms
         ener = enerFunc(initSys,simulParam)
         for i in 1:algoParam[1]
             pos = RandomPosition(sys)
-            acep = ProbOptimal(sys,pos,enerFunc,simulParam)
-            prob = rand()
+            acep = LogProbOptimal(sys,pos,enerFunc,simulParam)
+            prob = log(rand())
             if prob < acep
                 ChangeSpin!(sys,pos)
                 ener = ener - log(acep)*simulParam[4]
@@ -151,15 +175,15 @@ module Algorithms
             return false
         end
     end
-    function EnergyBounds(x::IsingModel,simulParam)
-        n = N(x)
+    function EnergyBounds(sys::IsingModel,simulParam)
+        n = N(sys)
         min = 0
-        max = max = N(x)*(simulParam[1]+Order(x)*(simulParam[2]+simulParam[3]))
+        max = max = N(sys)*(simulParam[1]+Order(sys)*(simulParam[2]+simulParam[3]))
     end
-    function EnergyBounds(x::LatticeGas,simulParam)
-        n = N(x)
-        min = N(x)*(-simulParam[1]-Order(x)*simulParam[2])
-        max = N(x)*(+simulParam[1]+Order(x)*(simulParam[2]+simulParam[3]))
+    function EnergyBounds(sys::LatticeGas,simulParam)
+        n = N(sys)
+        min = N(sys)*(-simulParam[1]-Order(sys)*simulParam[2])
+        max = N(sys)*(+simulParam[1]+Order(sys)*(simulParam[2]+simulParam[3]))
     end 
 
     """
@@ -211,7 +235,7 @@ module Algorithms
         while (modfact>=1e-5)
             pos = RandomPosition(sys)
             energyBefore = NormalEnergy(sys,simulParam)
-            energyAfter = energyBefore + 2*sys.linearLatt[pos]*(simulParam[2]*sys.linearNeigSumLatt[pos]+simulParam[1])
+            energyAfter = energyBefore + 2*sys.sites[pos]*(simulParam[2]*sys.neigSum[pos]+simulParam[1])
             energyBefore = energyBefore/(N(sys))
             energyAfter = energyAfter/(N(sys))
             p1 = SearchSortedMod(energyIntervals,energyBefore)
@@ -220,7 +244,7 @@ module Algorithms
             last = []
             if printLog
                 println("latt")
-                println(sys.linearLatt)
+                println(sys.sites)
                 println("pos")
                 println(pos)
                 println("hist")
@@ -245,10 +269,10 @@ module Algorithms
                 println(minimum(hist))
             end
             globalHist[p1] += 1
-            mag[p1] = (mag[p1]*(globalHist[p1]-1)+abs(sum(sys.linearLatt))/(N(sys)))*1/(globalHist[p1])
+            mag[p1] = (mag[p1]*(globalHist[p1]-1)+abs(sum(sys.sites))/(N(sys)))*1/(globalHist[p1])
             if p2 == 0
                     println("latt")
-                    println(sys.linearLatt)
+                    println(sys.sites)
                     println("pos")
                     println(pos)
                     println("hist")
@@ -322,7 +346,7 @@ module Algorithms
         energyBefore = NormalEnergy(sys,simulParam)
         while (modfact>=1e-5)
             pos = RandomPosition(sys)
-            energyAfter = energyBefore + 2*sys.linearLatt[pos]*(simulParam[2]*sys.linearNeigSumLatt[pos]+simulParam[1])
+            energyAfter = energyBefore + 2*sys.sites[pos]*(simulParam[2]*sys.neigSum[pos]+simulParam[1])
             energyBefore = energyBefore/(N(sys))
             energyAfter = energyAfter/(N(sys))
             p1 = SearchSortedMod(energyIntervals,energyBefore)
@@ -331,7 +355,7 @@ module Algorithms
             last = []
             if printLog
                 println("latt")
-                println(sys.linearLatt)
+                println(sys.sites)
                 println("pos")
                 println(pos)
                 println("hist")
@@ -356,10 +380,10 @@ module Algorithms
                 println(minimum(hist))
             end
             globalHist[p1] += 1
-            mag[p1] = (mag[p1]*(globalHist[p1]-1)+abs(sum(sys.linearLatt))/(N(sys)))*1/(globalHist[p1])
+            mag[p1] = (mag[p1]*(globalHist[p1]-1)+abs(sum(sys.sites))/(N(sys)))*1/(globalHist[p1])
             if p2 == 0
                     println("latt")
-                    println(sys.linearLatt)
+                    println(sys.sites)
                     println("pos")
                     println(pos)
                     println("hist")

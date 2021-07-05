@@ -1,6 +1,8 @@
 # building quasiperiodic lattices
-symetries=(7 10 13 23 31 53 73 89 101 113)
-iterations=(3 3 3 4 4 5 7 8 10 11)
+#symetries=(7 10 13 23 31 53 73 89 101 113)
+#iterations=(3 3 3 4 4 5 7 8 10 11)
+symetries=(5 6 7 8 9 10 13 17 20)
+iterations=(3 3 3 4 4 4 4 4 4)
 echo "quasiperiodic lattices"
 for ((i=0; i < ${#symetries[@]}; i ++ )); do
     echo $i ;
@@ -8,10 +10,10 @@ for ((i=0; i < ${#symetries[@]}; i ++ )); do
 done
 
 # building jamming/random lattices
-echo "jamming lattices"
-sizes=(200 300 400 500 600 700 800 900 1000)
-for ((i=0; i < 10; i ++ )); do
-    echo $i ; 
-    julia makeJammingLattice.jl --Ndiscs ${sizes[i]} --save "jam$i" 
-done
+#echo "jamming lattices"
+#sizes=(200 300 400 500 600 700 800 900 1000)
+#for ((i=0; i < 10; i ++ )); do
+#    echo $i ; 
+#    julia makeJammingLattice.jl --Ndiscs ${sizes[i]} --save "jam$i" 
+#done
 
