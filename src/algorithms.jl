@@ -126,6 +126,65 @@ module Algorithms
         return changes, sys , mags, eners
     end
 
+    """
+    
+    NPTFast(initSys,enerFunc,simulParam,algoParam)
+    
+    Using initSys as initial array, makes a metropolis-based simulation using enerFunc, simulParam, and algoParam as parameters. 
+    The acceptance rate for spin changes is calculated by calculating explicitly the energy, which makes it slow.
+    
+    """
+    function NPTFast(initSys,enerFunc,simulParam,algoParam;P::Real=1,V0::Real=1)
+        V = 10*V0
+        sys = copy(initSys)
+        changes = zeros(Int32,algoParam[1])
+        function auxEnerFunc(sys,simulParam,P,V)
+            newSimulParam = [simulParam[1],simulParam[2]*(V-V0),
+                             simulParam[3]*(V-V0),simulParam[4]]
+            n = Magnetization(sys,absolute=false)*N(sys)
+            return enerFunc(sys,newSimulParam) + P*V - n*log(V-V0)/simulParam[4]
+        end
+        eners = Array{Float32,1}(undef,algoParam[1]+1)
+        mags = Array{Float32,1}(undef,algoParam[1]+1)
+        ener = auxEnerFunc(sys,simulParam,P,V)
+        mag = Magnetization(sys,absolute=false)*N(sys)
+        eners[1] = ener
+        mags[1] = abs(mag)
+        for i in 1:algoParam[1]
+            # changing site
+            if rand() < 1/2
+                pos = RandomPosition(initSys)
+                newEner = auxEnerFunc(ChangeSpin(sys,pos),simulParam,P,V)
+                # using logarithms to make numbers smaller
+                acep = (-newEner+ener)/simulParam[4]
+                prob = log(rand())
+                if prob < acep
+                    ener = newEner
+                    mag +=  MagnetizationUpdate(sys,pos)
+                    ChangeSpin!(sys,pos)
+                    changes[i] = pos
+                else 
+                    changes[i] = 0
+                end
+            # changing volume
+            else
+                newV = V + 0.1*randn()
+                if newV > V0
+                    newEner = auxEnerFunc(sys,simulParam,P,newV)
+                    acep = (-newEner+ener)/simulParam[4]
+                    prob = log(rand())
+                    if prob < acep 
+                        ener = newEner
+                        V = newV
+                    end
+                end
+                changes[i] = 0
+            end
+            eners[i+1] = ener
+            mags[i+1] = mag
+        end
+        return changes, sys , mags, eners
+    end
 
     """
     MetropolisOptimal(initSys,enerFunc,simulParam,algoParam)
