@@ -5,7 +5,7 @@ println("Importing libraries")
 println()
 
 
-include("initialization.jl")
+include("init.jl")
 
 
 
@@ -60,7 +60,7 @@ for i in 1:length(simulParams)
     print("Running ")
     println(name)
     println(simulParam)
-    @time res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
+    @time res = Algorithms.NPTFast(initSys[iter],enerFunc,simulParam,algoParam)
     InOut.MetropolisAllOut(initSys[iter],res,name)
     initSys[iter] = copy(res[2])
 end

@@ -1,6 +1,6 @@
 # CartesianIndex are array-like objects that allow us to 
-# index a multidimensional array with a single object
-# we use the CI abreviation to ease writting
+# index a multidimensional array with a single object.
+# We use the CI abreviation to ease writting
 const CI = CartesianIndex
 
 

@@ -36,6 +36,10 @@ function setParseCommandline()
             help = "Number of independent systems simulated for same simulation parameters"
             arg_type = Int64
             default = 20
+        "--processes"
+            help = "Number of parallel processes to instiantate"
+            arg_type = Int64
+            default = 10
         "-B", "--Barray"
             help = "String describing the begining, end and length of the Barray. Reverse order (begining > end) is supported"
             arg_type = String

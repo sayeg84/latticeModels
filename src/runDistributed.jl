@@ -3,17 +3,7 @@ println()
 
 using Distributed
 using DelimitedFiles
-
-const cores = Sys.CPU_THREADS
-Distributed.addprocs(cores)
-
-@everywhere using ArgParse, Statistics, Dates
-@sync @everywhere include("inOut.jl")
-@everywhere include("algorithms.jl")
-@everywhere include("lattices.jl")
-@everywhere include("initialization.jl")
-
-
+include("init.jl")
 
 println()
 println("Parsing Arguments")
@@ -21,6 +11,19 @@ println()
 
 
 const parsedArgs = setParseCommandline()
+
+const cores = Sys.CPU_THREADS
+Distributed.addprocs(parsedArgs["processes"])
+
+@everywhere using Statistics, Dates
+@sync @everywhere include("inOut.jl")
+@everywhere include("algorithms.jl")
+@everywhere include("lattices.jl")
+@everywhere include("init.jl")
+
+
+
+
 
 
 
@@ -79,7 +82,7 @@ println()
         println()
     end
     name = string(simulParamDict[simulParam],"_",iter)
-    res = Algorithms.MetropolisFast(initSys[iter],enerFunc,simulParam,algoParam)
+    res = Algorithms.NPTFast(initSys[iter],enerFunc,simulParam,algoParam)
     InOut.MetropolisAllOut(initSys[iter],res,name)
     initSys[iter] = copy(res[2])
     if i==length(simulParams)

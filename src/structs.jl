@@ -288,10 +288,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @show N(a)
     @show RandomPosition(a)
     @show a.neigSum[1]
-
-
-
-
 end
 
 
