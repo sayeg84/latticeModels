@@ -26,7 +26,7 @@ function AdjMat(edgList::Array{Array{T,1},1}) where {T<:Integer}
 end
 
 
-abstract type IsingModel end
+abstract type AbstractSystem end
 
 """
     SpinLattice
@@ -37,14 +37,15 @@ abstract type IsingModel end
     * edgList::Array{Array{Int32,1},1}: the edge list of the network where the model is defined
     * neigSum::ReadonlyMappedArray: an array that has the sum of the neighboring spins for a given spin. It updates automatically when the sites change.
     * shape::NTuple: a tuple that represents the real shape of the `sites` array. Its value defaults to `(length(sites))` for non-lattice-inspired networks.
-    
+    * n: number of elements
 """
-struct SpinLattice<:IsingModel
+struct SpinLattice <: AbstractSystem
+
     sites::Array{Int8,1}
-    edgList::Array{Array{Int32,1},1}
+    graph::Array{Array{Int32,1},1}
     neigSum::ReadonlyMappedArray
     shape::NTuple
-    
+    n::Int32
     """
 
     SpinLattice(name::AbstractString,shape;periodic::Bool=false,random::Bool=false)
@@ -64,7 +65,7 @@ struct SpinLattice<:IsingModel
         sites = reshape(latt,prod(shape))
         edgList = makeLattice(name,shape,periodic=periodic)[2]
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,shape)
+        new(sites,edgList,neigSum,shape,prod(shape))
     end
     
     """
@@ -83,7 +84,7 @@ struct SpinLattice<:IsingModel
         end
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,(size(adjMat)[1],))
+        new(sites,edgList,neigSum,(size(adjMat)[1],),size(adjMat)[1])
     end
     
     """
@@ -100,7 +101,7 @@ struct SpinLattice<:IsingModel
         sites = copy(latt)
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,(size(adjMat)[1],))
+        new(sites,edgList,neigSum,(size(adjMat)[1],),size(adjMat)[1])
     end
 
     """
@@ -117,7 +118,7 @@ struct SpinLattice<:IsingModel
         sites = copy(latt)
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,shape)
+        new(sites,edgList,neigSum,shape,prod(shape))
     end
 end
 
@@ -127,11 +128,13 @@ end
 
     Construct to store a lattice gas model of 0 and 1 entries. Fields and constructors are equivalent to the `SpinLattice`. Refer to its documentation for more info.
 """
-struct LatticeGas<:IsingModel
+struct LatticeGas<:AbstractSystem
+
     sites::Array{Int8,1}
     edgList::Array{Array{Int32,1},1}
     neigSum::ReadonlyMappedArray
     shape::NTuple
+    n::Int32
 
      function LatticeGas(name::AbstractString,shape;periodic::Bool=false,random::Bool=false)
         if random
@@ -142,7 +145,7 @@ struct LatticeGas<:IsingModel
         sites = reshape(latt,prod(shape))
         edgList = makeLattice(name,shape,periodic=periodic)[2]
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,shape)
+        new(sites,edgList,neigSum,shape,prod(shape))
     end
     
     function LatticeGas(adjMat::Array{T,2};random::Bool=true) where {T<:Integer}
@@ -152,10 +155,9 @@ struct LatticeGas<:IsingModel
         sites = rand(Array{Int8}([0,1]),size(adjMat)[1])
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,(size(adjMat)[1],))
+        new(sites,edgList,neigSum,(size(adjMat)[1],),size(adjMat)[1])
     end
     
-
     function LatticeGas(latt,adjMat::Array{T,2}) where {T<:Integer}
         if length(latt) != size(adjMat)[1] 
             return error("Lattice and adjacency matrix must match")
@@ -165,7 +167,7 @@ struct LatticeGas<:IsingModel
         sites = copy(latt)
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,(size(adjMat)[1],))
+        new(sites,edgList,neigSum,(size(adjMat)[1],),size(adjMat)[1])
     end
     
     function LatticeGas(latt,adjMat,shape::Tuple)
@@ -177,40 +179,123 @@ struct LatticeGas<:IsingModel
         sites = copy(latt)
         edgList = EdgList(adjMat)
         neigSum = mappedarray(x -> sum(sites[x]),edgList)
-        new(sites,edgList,neigSum,shape)
+        new(sites,edgList,neigSum,shape,prod(shape))
     end
-
-
 end
-# Auxiliary struct to define functions for both systems
+
+#=
+
+#############################
+
+This was an attempt to use a Graphs.jl object instead of an edge list 
+to store the network information. Although it seemed like a good idea,
+the recomputation of the edg list any time we needed it made everything too slow 
+
+#############################
+
+using Graphs
 
 
+struct LatticeGas2<:AbstractSystem
 
+    sites::Array{Int8,1}
+    graph::AbstractGraph
+    neigSum::ReadonlyMappedArray
+    shape::NTuple
+    n::Int32
 
-function N(sys::IsingModel)
-    return length(sys.sites)
+     function LatticeGas2(name::AbstractString,shape;periodic::Bool=false,random::Bool=false)
+        if random
+            latt = rand(Array{Int8}([0,1]),shape)                
+        else
+            latt = ones(shape)
+        end
+        sites = reshape(latt,prod(shape))
+        edgList = makeLattice(name,shape,periodic=periodic)[2]
+        neigSum = mappedarray(x -> sum(sites[x]),edgList)
+        new(sites,SimpleGraph(AdjMat(edgList)),neigSum,shape,prod(shape))
+    end
+    
+    function LatticeGas2(adjMat::Array{T,2};random::Bool=true) where {T<:Integer}
+        if size(adjMat)[1] != size(adjMat)[2]
+            return error("Lattice and adjacency matrix must match")
+        end
+        sites = rand(Array{Int8}([0,1]),size(adjMat)[1])
+        G = SimpleGraph(adjMat)
+        neigSum = mappedarray(x -> sum(sites[x]),G.fadjlist)
+        new(sites,G,neigSum,(size(adjMat)[1],),size(adjMat)[1])
+    end
+    
+    function LatticeGas2(latt,adjMat::Array{T,2}) where {T<:Integer}
+        if length(latt) != size(adjMat)[1] 
+            return error("Lattice and adjacency matrix must match")
+        elseif size(adjMat)[1] != size(adjMat)[2]
+            return error("Lattice and adjacency matrix must match")
+        end
+        sites = copy(latt)
+        G = SimpleGraph(adjMat)
+        neigSum = mappedarray(x -> sum(sites[x]),G.fadjlist)
+        new(sites,G,neigSum,(size(adjMat)[1],),size(adjMat)[1])
+    end
+    
+    function LatticeGas2(latt,adjMat,shape::Tuple)
+        if length(latt) != size(adjMat)[1] 
+            return error("Lattice and adjacency matrix must match")
+        elseif size(adjMat)[1] != size(adjMat)[2]
+            return error("Lattice and adjacency matrix must match")
+        end
+        sites = copy(latt)
+        G = SimpleGraph(adjMat)
+        neigSum = mappedarray(x -> sum(sites[x]),G.fadjlist)
+        new(sites,G,neigSum,shape,prod(shape))
+    end
 end
-function Order(sys::IsingModel)
+
+function Base.sizeof(sys::LatticeGas2)
+    return sizeof(sys.sites) + sizeof(sys.graph.fadjlist) + sizeof(sys.neigSum) + sizeof(sys.shape) 
+end
+
+
+=#
+
+function Base.copy(sys::AbstractSystem)
+    return typeof(sys)(deepcopy(sys.sites),copy(AdjMat(sys.edgList)),sys.shape)
+end
+
+
+
+function Base.sizeof(sys::AbstractSystem)
+    return sizeof(sys.sites) + sizeof(sys.edgList) + sizeof(sys.neigSum) + sizeof(sys.shape) 
+end
+
+function N(sys::AbstractSystem)
+    return sys.n
+end
+
+function Order(sys::AbstractSystem)
     return sum([length(y) for y in sys.edgList])/2
 end
 
-#function RandomPosition(sys::IsingModel)
-function RandomPosition(sys::IsingModel)
+function RandomPosition(sys::AbstractSystem)
     return rand(1:N(sys))
 end
 
-function NeigborSum(sys::IsingModel,pos::Integer)
+function NeigborSum(sys::AbstractSystem,pos::Integer)
     return sum(sys.sites[sys.edgList[pos]])
 end
 
+function MutateSingle(sys::SpinLattice,pos::Integer)
+    return -1*y.sites[pos]
+end
+
 function ChangeSpin(sys::SpinLattice,pos::Integer)
-    y=copy(sys)
+    y = copy(sys)
     y.sites[pos] = -1*y.sites[pos]
     return y
 end
 
 function ChangeSpin(sys::LatticeGas,pos::Integer)
-    y=copy(sys)
+    y = copy(sys)
     y.sites[pos] = 1-y.sites[pos]
     return y
 end
@@ -223,23 +308,10 @@ function ChangeSpin!(sys::LatticeGas,pos::Integer)
     sys.sites[pos] = 1-sys.sites[pos]
 end
 
-function Base.copy(sys::SpinLattice)
-    return SpinLattice(deepcopy(sys.sites),deepcopy(AdjMat(sys.edgList)),sys.shape)
-end
 
-function Base.copy(sys::LatticeGas)
-    return LatticeGas(deepcopy(sys.sites),deepcopy(AdjMat(sys.edgList)),sys.shape)
-end
-function Base.sizeof(sys::IsingModel)
-    return sizeof(sys.sites) + sizeof(sys.edgList) + sizeof(sys.neigSum) + sizeof(sys.shape)
-end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     #   Testing
-    
-    include("lattices.jl")
-
-
     a = SpinLattice("square",(3,3),periodic=true)
     println(a.sites)
     println(a.edgList[1])

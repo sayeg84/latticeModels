@@ -1,8 +1,8 @@
-include("structs.jl")
+include("systems.jl")
 module Cycles
     import ..SpinLattice
     import ..LatticeGas
-    import ..IsingModel
+    import ..AbstractSystem
     import ..N
     import ..AdjMat
     import ..EdgList
@@ -264,7 +264,7 @@ module Cycles
     """
         ciclos2(sys)
 
-        Auxiliar function to get cycles from IsingModel and 
+        Auxiliar function to get cycles from AbstractSystem and 
     """
     function ciclos2(sys)
         n = sqrt(N(sys))
@@ -288,7 +288,7 @@ module Cycles
 
         Function to get number of edges in cycles using LightGraphs package
     """
-    function lgEdgesInCycles(sys::IsingModel)
+    function lgEdgesInCycles(sys::AbstractSystem)
         edgList = [[y for y in sys.edgList[pos] if sys.sites[y]==1 && sys.sites[pos]==1] for pos in 1:N(sys) ]
         a = AdjMat(edgList)
         G = Graph(a)

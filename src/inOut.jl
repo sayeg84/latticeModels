@@ -1,4 +1,4 @@
-include("structs.jl")
+include("models.jl")
 
 module InOut
     import ..EdgList
