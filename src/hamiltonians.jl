@@ -28,9 +28,15 @@ struct PenalizedHamiltonian <: AbstractHamiltonian
 end
 
 function Energy(system::AbstractSystem,hamil::PenalizedHamiltonian)::Float64
-    ener = - hamil.B*sum(system.sites) 
-           - hamil.J*sum(system.neigSum.*system.sites)/2
-           + hamil.C*EdgInCyc(sys)
+    subsystemEdgList = Subsystem(system)
+    ener = 0
+    for i in 1:N(system)
+        ener += -system.sites[i]*hamil.B 
+        for j in system.edgList[i]
+            ener -= hamil.J/2*system.sites[i]*system.sites[j]
+        end
+    end
+    ener += hamil.C*EdgesInCycles(subsystemEdgList)
     return ener
 end
 
@@ -39,6 +45,10 @@ if abspath(PROGRAM_FILE) == @__FILE__
     H1 = IsingHamiltonian(rand(),rand())
     H2 = PenalizedHamiltonian(rand(),rand(),rand())
     system = LatticeGas("square",(100,100),random=true)
+    Energy(system,H1)
+    system2 = LatticeGas("square",(100,100))
+    Energy(system,H2)
+    Energy(system2,H2)
 end
 
 

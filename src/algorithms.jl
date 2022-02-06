@@ -41,7 +41,7 @@ module Algorithms
         for i in 1:algoParam[1]
             pos = RandomPosition(sys)
             acep = LogProb(sys,pos,enerFunc,simulParam)
-            prob = rand()
+            prob = log(rand())
             if prob<acep
                 ener = newEner
                 mag +=  MagnetizationUpdate(sys,pos)

@@ -10,8 +10,8 @@ module StatEnsemble
     import ..Cycles.lgEdgesInCycles
     import ..Cycles.lgNewCycles
     import ..Cycles.ciclos2
-    import ..Cycles.EdgInCyc
-    import ..Cycles.CycSubSys
+    import ..Cycles.EdgesInCycles
+    import ..Cycles.CyclesSubsystem
 
 
     using Statistics,LinearAlgebra
@@ -38,7 +38,7 @@ module StatEnsemble
         B=simulParam[1]
         J=simulParam[2]
         C=simulParam[3]
-        e = -B*sum(sys.sites) - J * sum(sys.neigSum .* sys.sites ) /2 + C * EdgInCyc(sys)
+        e = -B*sum(sys.sites) - J * sum(sys.neigSum .* sys.sites ) /2 + C * EdgesInCycles(sys)
         return e
     end
 

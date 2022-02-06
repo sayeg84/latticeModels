@@ -1,31 +1,48 @@
 using MappedArrays
 
 include("lattices.jl")
+include("cycles.jl")
 
+"""
+EdgList(adjMat::Array{T,2})
+
+Constructs edge list from adjacency matrix
+"""
 function EdgList(adjMat::Array{T,2}) where {T<:Integer}
-    n=size(adjMat)[1]
-    A=Array{Array{Int64,1},1}()
+    n = size(adjMat)[1]
+    edgList = Array{Array{Int64,1},1}()
     for i in 1:n
-        B=Array{Int64,1}()
+        neighs = Array{Int64,1}()
         for j in 1:n
             if adjMat[i,j] == 1
-                push!(B,j)
+                push!(neighs,j)
             end
         end
-        push!(A,B)
+        push!(edgList,neighs)
     end
-    return A
+    return edgList
 end
 
+
+"""
+AdjMat(edgList::Array{Array{T,1},1})
+
+Constructs adjacency matrix from edge list
+
+"""
 function AdjMat(edgList::Array{Array{T,1},1}) where {T<:Integer}  
-    M = zeros(Int8,length(edgList),length(edgList))
+    adjMat = zeros(Int8,length(edgList),length(edgList))
     for i in 1:length(edgList)
-        M[i,edgList[i]] = ones(length(edgList[i]))
+        adjMat[i,edgList[i]] = ones(length(edgList[i]))
     end
-    return M
+    return adjMat
 end
 
+"""
+AbstractSystem
 
+Abstract type to englobe all systems
+"""
 abstract type AbstractSystem end
 
 """
@@ -42,7 +59,7 @@ abstract type AbstractSystem end
 struct SpinLattice <: AbstractSystem
 
     sites::Array{Int8,1}
-    graph::Array{Array{Int32,1},1}
+    edgList::Array{Array{Int32,1},1}
     neigSum::ReadonlyMappedArray
     shape::NTuple
     n::Int32
@@ -123,6 +140,17 @@ struct SpinLattice <: AbstractSystem
 end
 
 
+function FlipSite(system::SpinLattice,pos::Integer)
+    newSystem = copy(system)
+    newSystem.sites[pos] = -1*newSystem.sites[pos]
+    return newSystem
+end
+
+function FlipSite!(system::SpinLattice,pos::Integer)
+    system.sites[pos] = -1*system.sites[pos]
+end
+
+
 """
     LatticeGas
 
@@ -182,6 +210,18 @@ struct LatticeGas<:AbstractSystem
         new(sites,edgList,neigSum,shape,prod(shape))
     end
 end
+
+function FlipSite(system::LatticeGas,pos::Integer)
+    newSystem = copy(system)
+    newSystem.sites[pos] = 1-newSystem.sites[pos]
+    return newSystem
+end
+
+
+function FlipSite!(system::LatticeGas,pos::Integer)
+    system.sites[pos] = 1-system.sites[pos]
+end
+
 
 #=
 
@@ -251,63 +291,100 @@ struct LatticeGas2<:AbstractSystem
     end
 end
 
-function Base.sizeof(sys::LatticeGas2)
-    return sizeof(sys.sites) + sizeof(sys.graph.fadjlist) + sizeof(sys.neigSum) + sizeof(sys.shape) 
+function Base.sizeof(system::LatticeGas2)
+    return sizeof(system.sites) + sizeof(system.graph.fadjlist) + sizeof(system.neigSum) + sizeof(system.shape) 
 end
 
 
 =#
 
-function Base.copy(sys::AbstractSystem)
-    return typeof(sys)(deepcopy(sys.sites),copy(AdjMat(sys.edgList)),sys.shape)
+function Base.copy(system::AbstractSystem)
+    return typeof(system)(deepcopy(system.sites),copy(AdjMat(system.edgList)),system.shape)
+end
+
+function Base.sizeof(system::AbstractSystem)
+    return sizeof(system.sites) + sizeof(system.edgList) + sizeof(system.neigSum) + sizeof(system.shape) 
+end
+
+function N(system::AbstractSystem)
+    return system.n
+end
+
+function Order(system::AbstractSystem)
+    return sum([length(y) for y in system.edgList])/2
+end
+
+function RandomPosition(system::AbstractSystem)
+    return rand(1:N(system))
+end
+
+function NeigborSum(system::AbstractSystem,pos::Integer)
+    return sum(system.sites[system.edgList[pos]])
+end
+
+abstract type AbstractMutation end
+
+struct SiteFlip <: AbstractMutation 
+    site::Int64
+    function SiteFlip(system::Union{SpinLattice,LatticeGas})
+        new(RandomPosition(system)) 
+    end
+end
+
+function length(mutation::SiteFlip)
+    return 1
+end
+
+function mutate(system::Union{SpinLattice,LatticeGas},mutation::SiteFlip)
+    return FlipSite(system,mutation.site)
+end
+
+function mutate!(system::Union{SpinLattice,LatticeGas},mutation::SiteFlip)
+    FlipSite!(system,mutation.site)
 end
 
 
 
-function Base.sizeof(sys::AbstractSystem)
-    return sizeof(sys.sites) + sizeof(sys.edgList) + sizeof(sys.neigSum) + sizeof(sys.shape) 
+# TODO: generalize `Subsystem` and `CyclesSubsystem` to use boolean function 
+#       to get values instead of constant value comparison.
+
+
+# note: creating function to get subsystem is more efficient than directly
+#       using the expresssion
+
+"""
+Subsystem(system::AbstractSystem,val::Integer=Int8(1))
+
+Returns edgeList of subgraph of `system` with values `val`
+"""
+function Subsystem(system::AbstractSystem,val::Integer=Int8(1))
+    edgList = [[y for y in system.edgList[pos] if system.sites[y]==val && system.sites[pos]==val] for pos in 1:N(system)]
+    return edgList
 end
 
-function N(sys::AbstractSystem)
-    return sys.n
-end
+"""
+CyclesSubsystem(system::AbstractSystem,val::Integer=Int8(1))
 
-function Order(sys::AbstractSystem)
-    return sum([length(y) for y in sys.edgList])/2
-end
+Returns the subsystem of all the cycles in the subgraph of `system`
+of nodes with value `val`
 
-function RandomPosition(sys::AbstractSystem)
-    return rand(1:N(sys))
+"""
+function CyclesSubsystem(system::AbstractSystem,val::Integer=Int8(1))
+    bridgeArray = BridgesArray(system.edgList)
+    adjMat = AdjMat(edgList)
+    for brid in bridgeArray
+        adjMat[brid[1],brid[2]] = 0
+        adjMat[brid[2],brid[1]] = 0
+    end
+    degs = sum(adjMat,dims=1)
+    subsystem = copy(system)
+    for i in 1:n
+        if degs[i] <= 1 && system.sites[i] == val
+            ChangeSpin!(subsystem,i)
+        end
+    end
+    return subsystem
 end
-
-function NeigborSum(sys::AbstractSystem,pos::Integer)
-    return sum(sys.sites[sys.edgList[pos]])
-end
-
-function MutateSingle(sys::SpinLattice,pos::Integer)
-    return -1*y.sites[pos]
-end
-
-function ChangeSpin(sys::SpinLattice,pos::Integer)
-    y = copy(sys)
-    y.sites[pos] = -1*y.sites[pos]
-    return y
-end
-
-function ChangeSpin(sys::LatticeGas,pos::Integer)
-    y = copy(sys)
-    y.sites[pos] = 1-y.sites[pos]
-    return y
-end
-
-function ChangeSpin!(sys::SpinLattice,pos::Integer)
-    sys.sites[pos] = -1*sys.sites[pos]
-end
-
-function ChangeSpin!(sys::LatticeGas,pos::Integer)
-    sys.sites[pos] = 1-sys.sites[pos]
-end
-
 
 
 if abspath(PROGRAM_FILE) == @__FILE__

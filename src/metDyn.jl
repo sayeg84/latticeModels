@@ -65,7 +65,7 @@ for i in 1:length(changes)
         push!(sysArray,copy(sys))
     end
 end
-#cycArray = [Cycles.CycSubSys(x) for x in sysArray]
+#cycArray = [Cycles.CyclesSubsystem(x) for x in sysArray]
 
 
 function plotSystem(sys,c;zpos=0)
@@ -96,7 +96,7 @@ cd("animPlots")
 for i in 1:length(sysArray)
     PyPlot.figure(figsize=(8,8))
     plotSystem(sysArray[i],"k")
-    plotSystem(Cycles.CycSubSys(sysArray[i]),(0.6,0.4,0.8))
+    plotSystem(Cycles.CyclesSubsystem(sysArray[i]),(0.6,0.4,0.8))
     if parsedArgs["X"]
         PyPlot.xticks([])
         PyPlot.yticks([])

@@ -4,17 +4,15 @@ include("hamiltonians.jl")
 abstract type AbstractModel end
 
 
-struct Model <: AbstractModel
-    system::AbstractSystem
-    hamiltonian::AbstractHamiltonian
+struct Model{T1<:AbstractSystem,T2<:AbstractHamiltonian} <: AbstractModel
+    system::T1
+    hamiltonian::T2
     variables::Tuple{Vararg{Function}}
 end
 
+abstract type AbstractVariable end
 
 
-function SitesSum(system) # skipping type annotation 
-    return sum(system.sites)
-end
 
 if abspath(PROGRAM_FILE) == @__FILE__
 
@@ -23,7 +21,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
     energy2 = IsingHamiltonian(2,4)
     m1 = Model(system,energy1,(SitesSum,))
     m2 = Model(system,energy1,(SitesSum,))
-
     @show m1.system.sites
     m1.system.sites[1] = 2
     @show m2.system.sites
